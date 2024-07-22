@@ -14,17 +14,17 @@ Metadata:
           - FlowModelARN
 
       - Label:
+          default: Container images
+        Parameters:
+          - VRLLambdaImage
+          - NginxContainerImage
+          - WebContainerImage
+      - Label:
           default: UI admin credentials
         Parameters:
           - SuperuserEmail
           - SuperuserUsername
           - SuperuserPassword
-      - Label:
-          default: Container images
-        Parameters:
-          - NginxContainerImage
-          - WebContainerImage
-          - VRLLambdaImage
       - Label:
           default: "Load Balancer Configuration"
         Parameters:
@@ -144,8 +144,7 @@ Parameters:
   VRLLambdaImage:
     Description: VRL Lambda ECR container image URI
     Type: String
-    MinLength: 8
-    ConstraintDescription: Must be minimum length of 8
+    AllowedPattern: "^[0-9]{12}.dkr.ecr.[a-z]{2}-[a-z]+-[0-9].amazonaws.com/[a-z0-9-]+:[a-zA-Z0-9.-]+$"
 
   TechniqueLookupObject:
     Type: String
@@ -382,32 +381,35 @@ Parameters:
   SuperuserEmail: 
     Description: Email of superuser
     Type: String
+    Default: admin@admin.com
     AllowedPattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$"
     ConstraintDescription: Must be a valid email address
 
   SuperuserUsername: 
     Description: Superuser username. Minimum length of 3.
     Type: String
+    Default: maestro
     MinLength: 3
     ConstraintDescription: Must be minimum length of 3
 
   SuperuserPassword: 
     Description: Superuser password. Minimum length of 8
     Type: String
+    Default: changemenow
     MinLength: 8
     ConstraintDescription: Must be minimum length of 8
   
   NginxContainerImage: 
     Description: Nginx container image with tag nginx-market*
     Type: String
-    MinLength: 8
-    ConstraintDescription: Must be minimum length of 8
+    Default: "709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/cytech:nginx-marketv0.0.3"
+    AllowedPattern: "^[0-9]{12}.dkr.ecr.[a-z]{2}-[a-z]+-[0-9].amazonaws.com/[a-z0-9-]+/[a-z0-9-]+:[a-zA-Z0-9.-]+$"
   
   WebContainerImage: 
     Description: Container image for web app with tag market*
     Type: String
-    MinLength: 8
-    ConstraintDescription: Must be minimum length of 8
+    Default: "709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/cytech:marketv0.1.2"
+    AllowedPattern: "^[0-9]{12}.dkr.ecr.[a-z]{2}-[a-z]+-[0-9].amazonaws.com/[a-z0-9-]+/[a-z0-9-]+:[a-zA-Z0-9.-]+$"
 
   VPCNamePrefix:
     Description: Prefix for naming VPC and corresponding resources
@@ -538,6 +540,12 @@ Mappings:
 Resources:
   Bucket:
     Type: AWS::S3::Bucket
+    DependsOn:
+      - SagemakerRole
+      - LambdaRole
+      - ExecutionRole
+      - EcsInstanceExecutionRole
+      - EcsInstanceProfile
     Properties:
       BucketName: !Ref BucketName
 
@@ -4875,6 +4883,8 @@ Resources:
 
         BATCH_TRANSFORM_JOB_TIMEOUT = int(os.getenv("batch_transform_job_timeout"))
 
+        BATCH_TRANSFORM_JOB_SUFFIX = int(os.getenv("batch_transform_job_suffix"))
+
         missing_variables = []
         if CLUSTER_MODEL_NAME is None:
             missing_variables.append("cluster_model_name")
@@ -4887,6 +4897,9 @@ Resources:
 
         if missing_variables:
             raise ValueError(f"Please enter environment variable(s): {missing_variables}")
+
+        if BATCH_TRANSFORM_JOB_SUFFIX is None:
+            BATCH_TRANSFORM_JOB_SUFFIX = ""
 
         S3_CLIENT = boto3.client("s3")
         SAGEMAKER = boto3.client(service_name='sagemaker')
@@ -4958,6 +4971,8 @@ Resources:
                 batch_transform_job: Configuration to create batch transform job
             '''
             transform_job_name = f'transform-job-cluster-{unique_id}'
+            if BATCH_TRANSFORM_JOB_SUFFIX:
+                transform_job_name += f"-{BATCH_TRANSFORM_JOB_SUFFIX}"
 
             transform_input = {
                 "DataSource": {
@@ -6653,6 +6668,8 @@ Resources:
 
         BATCH_TRANSFORM_JOB_TIMEOUT = int(os.getenv("batch_transform_job_timeout"))
 
+        BATCH_TRANSFORM_JOB_SUFFIX = int(os.getenv("batch_transform_job_suffix"))
+
         missing_variables = []
         if FLOW_MODEL_NAME is None:
             missing_variables.append("flow_model_name")
@@ -6665,6 +6682,9 @@ Resources:
 
         if missing_variables:
             raise ValueError(f"Please enter environment variable(s): {missing_variables}")
+
+        if BATCH_TRANSFORM_JOB_SUFFIX is None:
+            BATCH_TRANSFORM_JOB_SUFFIX = ""
 
         SCRATCH_DIR = "scratch"
         S3_CLIENT = boto3.client("s3")
@@ -6727,6 +6747,8 @@ Resources:
             global SCRATCH_DIR
 
             transform_job_name = f'transform-job-flow-{unique_id}'
+            if BATCH_TRANSFORM_JOB_SUFFIX:
+                transform_job_name += f"-{BATCH_TRANSFORM_JOB_SUFFIX}"
 
             transform_input = {
                 "DataSource": {
@@ -7963,7 +7985,8 @@ Resources:
 
   createCampaign:
     Type: AWS::Serverless::Function
-    DependsOn: LoadBalancer
+    DependsOn:
+      - LoadBalancer
     Properties:
       FunctionName: !Ref CreateCampaignFunctionName
       Description: !Sub
@@ -9507,7 +9530,8 @@ Resources:
 
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
-    DependsOn: LoadBalancer
+    DependsOn:
+      - LoadBalancer
     Properties:
       Family: !Ref ServiceAndTaskDefinitionName
       Cpu: !Ref Cpu
@@ -9665,7 +9689,7 @@ Resources:
 
   EcsService:
     Type: AWS::ECS::Service
-    DependsOn: 
+    DependsOn:
       - TaskDefinition
       - ClusterCPAssociation
       - ECSCluster
@@ -9675,6 +9699,10 @@ Resources:
       TaskDefinition: !GetAtt TaskDefinition.TaskDefinitionArn
       DesiredCount: 1
       HealthCheckGracePeriodSeconds: '20'
+      DeploymentConfiguration:
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: false
       LoadBalancers:
         - ContainerName: bastet_nginx
           ContainerPort: 80
@@ -9682,7 +9710,8 @@ Resources:
   
   LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-    DependsOn: TargetGroup
+    DependsOn:
+      - TargetGroup
     Properties:
       Name: !Ref LoadBalancerName
       Subnets: 
@@ -9717,7 +9746,8 @@ Resources:
 
   ECSLaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
-    DependsOn: ECSCluster
+    DependsOn:
+      - ECSCluster
     Properties:
       LaunchTemplateData:
         ImageId: !Ref LatestECSOptimizedAMI
@@ -9743,7 +9773,8 @@ Resources:
   
   ECSAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
-    DependsOn: ECSCluster
+    DependsOn:
+      - ECSCluster
     Properties:
       MinSize: !Ref ClusterAutoScalingMinSize
       MaxSize: !Ref ClusterAutoScalingMaxSize
@@ -9764,7 +9795,8 @@ Resources:
   
   ECSCluster:
     Type: AWS::ECS::Cluster
-    DependsOn: EcsInstanceProfile
+    DependsOn:
+      - EcsInstanceProfile
     Properties:
       ClusterName: !Ref ECSClusterName
       ClusterSettings:
@@ -9794,7 +9826,8 @@ Resources:
   
   ClusterCPAssociation:
     Type: AWS::ECS::ClusterCapacityProviderAssociations
-    DependsOn: ECSCluster
+    DependsOn:
+      - ECSCluster
     Properties:
       Cluster: !Ref ECSClusterName
       CapacityProviders:
@@ -9890,3 +9923,8 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${VPCNamePrefix}-PublicSecurityGroup"
+
+Outputs:
+  LoadBalancerDNSName:
+    Description: "The DNS name of the load balancer"
+    Value: !Sub "http://${LoadBalancer.DNSName}:8000"
