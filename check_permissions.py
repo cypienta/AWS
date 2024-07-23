@@ -1,16 +1,253 @@
 import boto3
 from botocore.exceptions import ClientError
 
-actions = {
-    'sagemaker': ['sagemaker:ListEndpoints'],
-    'lambda': ['lambda:ListFunctions'],
-    's3': ['s3:ListBuckets'],
-    'ecs': ['ecs:ListClusters'],
-    'ec2': ['ec2:DescribeInstances'],
-    'ecr': ['ecr:DescribeRepositories'],
-    'iam': ['iam:ListUsers'],
-    'cloudformation': ['cloudformation:ListStacks']
-}
+actions = {}
+
+actions['autoscaling'] = [
+    "autoscaling:AttachLoadBalancerTargetGroups",
+    "autoscaling:AttachLoadBalancers",
+    "autoscaling:CreateAutoScalingGroup",
+    "autoscaling:CreateLaunchConfiguration",
+    "autoscaling:CreateOrUpdateTags",
+    "autoscaling:DeleteAutoScalingGroup",
+    "autoscaling:DeleteLaunchConfiguration",
+    "autoscaling:DeleteTags",
+    "autoscaling:Describe*",
+    "autoscaling:UpdateAutoScalingGroup"]
+
+actions['aws-marketplace'] = [
+    "aws-marketplace:AcceptAgreementApprovalRequest",
+    "aws-marketplace:AcceptAgreementRequest",
+    "aws-marketplace:CancelAgreement",
+    "aws-marketplace:CancelAgreementRequest",
+    "aws-marketplace:DescribeAgreement",
+    "aws-marketplace:GetAgreementTerms",
+    "aws-marketplace:ListEntitlementDetails",
+    "aws-marketplace:Subscribe",
+    "aws-marketplace:Unsubscribe",
+    "aws-marketplace:ViewSubscriptions"]
+
+actions['cloudformation'] = [
+    "cloudformation:CancelUpdateStack",
+    "cloudformation:ContinueUpdateRollback",
+    "cloudformation:CreateChangeSet",
+    "cloudformation:CreateStack",
+    "cloudformation:CreateUploadBucket",
+    "cloudformation:DeleteChangeSet",
+    "cloudformation:DeleteStack",
+    "cloudformation:DescribeChangeSet",
+    "cloudformation:DescribeStackEvents",
+    "cloudformation:DescribeStackResource",
+    "cloudformation:DescribeStackResources",
+    "cloudformation:DescribeStackSet",
+    "cloudformation:DescribeStackSetOperation",
+    "cloudformation:DescribeStacks",
+    "cloudformation:ExecuteChangeSet",
+    "cloudformation:GetTemplate",
+    "cloudformation:GetTemplateSummary",
+    "cloudformation:ListChangeSets",
+    "cloudformation:ListStackInstances",
+    "cloudformation:ListStackResources",
+    "cloudformation:ListStacks",
+    "cloudformation:RollbackStack",
+    "cloudformation:TagResource",
+    "cloudformation:UntagResource",
+    "cloudformation:UpdateStack",
+    "cloudformation:ValidateTemplate"]
+
+actions['cloudshell'] = ["cloudshell:*"]
+
+actions['ec2'] = [
+    "ec2:AssociateRouteTable",
+    "ec2:AssociateVpcCidrBlock",
+    "ec2:AttachInternetGateway",
+    "ec2:AuthorizeSecurityGroupEgress",
+    "ec2:AuthorizeSecurityGroupIngress",
+    "ec2:CreateInternetGateway",
+    "ec2:CreateLaunchTemplate",
+    "ec2:CreateRoute",
+    "ec2:CreateRouteTable",
+    "ec2:CreateSecurityGroup",
+    "ec2:CreateSubnet",
+    "ec2:CreateTags",
+    "ec2:CreateVpc",
+    "ec2:DeleteInternetGateway",
+    "ec2:DeleteLaunchTemplate",
+    "ec2:DeleteRoute",
+    "ec2:DeleteRouteTable",
+    "ec2:DeleteSecurityGroup",
+    "ec2:DeleteSubnet",
+    "ec2:DeleteTags",
+    "ec2:DeleteVpc",
+    "ec2:Describe*",
+    "ec2:DetachInternetGateway",
+    "ec2:DisassociateRouteTable",
+    "ec2:DisassociateVpcCidrBlock",
+    "ec2:ModifySubnetAttribute",
+    "ec2:ModifyVpcAttribute",
+    "ec2:RevokeSecurityGroupEgress",
+    "ec2:RevokeSecurityGroupIngress",
+    "ec2:RunInstances",
+    "ec2:StartInstances",
+    "ec2:StopInstances",
+    "ec2:TerminateInstances"]
+
+actions['ecr'] = ["ecr:*"]
+actions['ecs'] = ["ecs:*"]
+
+actions['elasticloadbalancing'] = [
+    "elasticloadbalancing:AddTags",
+    "elasticloadbalancing:CreateListener",
+    "elasticloadbalancing:CreateLoadBalancer",
+    "elasticloadbalancing:CreateRule",
+    "elasticloadbalancing:CreateTargetGroup",
+    "elasticloadbalancing:DeleteListener",
+    "elasticloadbalancing:DeleteLoadBalancer",
+    "elasticloadbalancing:DeleteRule",
+    "elasticloadbalancing:DeleteTargetGroup",
+    "elasticloadbalancing:DescribeListeners",
+    "elasticloadbalancing:DescribeLoadBalancerAttributes",
+    "elasticloadbalancing:DescribeLoadBalancers",
+    "elasticloadbalancing:DescribeRules",
+    "elasticloadbalancing:DescribeTags",
+    "elasticloadbalancing:DescribeTargetGroupAttributes",
+    "elasticloadbalancing:DescribeTargetGroups",
+    "elasticloadbalancing:DescribeTargetHealth",
+    "elasticloadbalancing:ModifyListener",
+    "elasticloadbalancing:ModifyLoadBalancerAttributes",
+    "elasticloadbalancing:ModifyTargetGroup",
+    "elasticloadbalancing:ModifyTargetGroupAttributes",
+    "elasticloadbalancing:RemoveTags"]
+
+actions['iam'] = [
+    "iam:AddRoleToInstanceProfile",
+    "iam:AttachRolePolicy",
+    "iam:CreateAccessKey",
+    "iam:CreateInstanceProfile",
+    "iam:CreatePolicy",
+    "iam:CreatePolicyVersion",
+    "iam:CreateRole",
+    "iam:CreateUser",
+    "iam:DeleteAccessKey",
+    "iam:DeleteInstanceProfile",
+    "iam:DeletePolicy",
+    "iam:DeleteRole",
+    "iam:DeleteRolePolicy",
+    "iam:DeleteUser",
+    "iam:DeleteUserPolicy",
+    "iam:DetachRolePolicy",
+    "iam:DetachUserPolicy",
+    "iam:GetInstanceProfile",
+    "iam:GetRole",
+    "iam:GetRolePolicy",
+    "iam:GetUser",
+    "iam:GetUserPolicy",
+    "iam:ListAccessKeys",
+    "iam:ListAttachedRolePolicies",
+    "iam:ListInstanceProfileTags",
+    "iam:ListInstanceProfiles",
+    "iam:ListInstanceProfilesForRole",
+    "iam:ListPolicies",
+    "iam:ListPolicyVersions",
+    "iam:ListRolePolicies",
+    "iam:ListRoles",
+    "iam:ListUserPolicies",
+    "iam:ListUsers",
+    "iam:PassRole",
+    "iam:PutRolePolicy",
+    "iam:PutUserPolicy",
+    "iam:RemoveRoleFromInstanceProfile",
+    "iam:TagInstanceProfile",
+    "iam:UntagInstanceProfile",
+    "iam:UpdateAccessKey",
+    "iam:UpdateRole",
+    "iam:UpdateUser"]
+
+actions['lambda'] = [
+    "lambda:AddPermission",
+    "lambda:CreateFunction",
+    "lambda:DeleteFunction",
+    "lambda:DeleteFunctionConcurrency",
+    "lambda:DeleteFunctionEventInvokeConfig",
+    "lambda:GetFunction",
+    "lambda:GetFunctionConcurrency",
+    "lambda:GetFunctionEventInvokeConfig",
+    "lambda:GetLayerVersion",
+    "lambda:GetProvisionedConcurrencyConfig",
+    "lambda:InvokeAsync",
+    "lambda:InvokeFunction",
+    "lambda:ListFunctionEventInvokeConfigs",
+    "lambda:ListFunctions",
+    "lambda:ListLayerVersions",
+    "lambda:ListLayers",
+    "lambda:ListTags",
+    "lambda:PutFunctionConcurrency",
+    "lambda:PutFunctionEventInvokeConfig",
+    "lambda:PutProvisionedConcurrencyConfig",
+    "lambda:RemovePermission",
+    "lambda:TagResource",
+    "lambda:UntagResource",
+    "lambda:UpdateFunctionCode",
+    "lambda:UpdateFunctionConfiguration",
+    "lambda:UpdateFunctionEventInvokeConfig"]
+
+actions['logs'] = [
+    "logs:CreateLogGroup",
+    "logs:DeleteLogGroup",
+    "logs:DeleteSubscriptionFilter",
+    "logs:DescribeLogGroups",
+    "logs:DescribeSubscriptionFilters",
+    "logs:FilterLogEvents",
+    "logs:GetLogEvents",
+    "logs:GetLogGroupFields",
+    "logs:ListTagsLogGroup",
+    "logs:PutSubscriptionFilter",
+    "logs:TagLogGroup",
+    "logs:UntagLogGroup"]
+
+actions['route53'] = [
+    "route53:CreateHostedZone",
+    "route53:DeleteHostedZone",
+    "route53:GetHealthCheck",
+    "route53:GetHostedZone",
+    "route53:ListHostedZonesByName"]
+
+actions['s3'] = [
+    "s3:CreateBucket",
+    "s3:DeleteBucket",
+    "s3:DeleteObject",
+    "s3:GetBucketLocation",
+    "s3:GetBucketNotification",
+    "s3:GetObject",
+    "s3:ListAllMyBuckets",
+    "s3:ListBucket",
+    "s3:PutBucketNotification",
+    "s3:PutBucketPolicy",
+    "s3:PutObject"]
+
+actions['sagemaker'] = [
+    "sagemaker:CreateModel",
+    "sagemaker:CreateTransformJob",
+    "sagemaker:DeleteModel",
+    "sagemaker:DescribeModel",
+    "sagemaker:DescribeModelPackage",
+    "sagemaker:DescribeTransformJob",
+    "sagemaker:ListModels",
+    "sagemaker:ListTransformJobs",
+    "sagemaker:StopTransformJob"]
+
+actions['servicediscovery'] = [
+    "servicediscovery:CreatePrivateDnsNamespace",
+    "servicediscovery:CreateService",
+    "servicediscovery:DeleteService",
+    "servicediscovery:GetNamespace",
+    "servicediscovery:GetOperation",
+    "servicediscovery:GetService",
+    "servicediscovery:ListNamespaces",
+    "servicediscovery:ListServices",
+    "servicediscovery:UpdateService"]
+
+actions['ssm'] = ["ssm:GetParameters"]
 
 iam_client = boto3.client('iam')
 sts_client = boto3.client('sts')
