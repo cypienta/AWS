@@ -1,0 +1,41 @@
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Effect": "Allow",
+			"Action": [
+        "s3:CreateBucket",
+        "s3:DeleteBucket",
+        "s3:DeleteObject",
+        "s3:GetBucketLocation",
+        "s3:GetBucketNotification",
+        "s3:GetObject",
+        "s3:ListAllMyBuckets",
+        "s3:ListBucket",
+        "s3:PutBucketNotification",
+        "s3:PutBucketPolicy",
+        "s3:PutObject",
+        "sagemaker:CreateModel",
+        "sagemaker:CreateTransformJob",
+        "sagemaker:DeleteModel",
+        "sagemaker:DescribeModel",
+        "sagemaker:DescribeModelPackage",
+        "sagemaker:DescribeTransformJob",
+        "sagemaker:ListModels",
+        "sagemaker:ListTransformJobs",
+        "sagemaker:StopTransformJob",
+        "servicediscovery:CreatePrivateDnsNamespace",
+        "servicediscovery:CreateService",
+        "servicediscovery:DeleteService",
+        "servicediscovery:GetNamespace",
+        "servicediscovery:GetOperation",
+        "servicediscovery:GetService",
+        "servicediscovery:ListNamespaces",
+        "servicediscovery:ListServices",
+        "servicediscovery:UpdateService",
+        "ssm:GetParameters"
+    ],
+			"Resource": "*"
+		}
+	]
+}
