@@ -4883,7 +4883,7 @@ Resources:
 
         BATCH_TRANSFORM_JOB_TIMEOUT = int(os.getenv("batch_transform_job_timeout"))
 
-        BATCH_TRANSFORM_JOB_SUFFIX = int(os.getenv("batch_transform_job_suffix"))
+        BATCH_TRANSFORM_JOB_SUFFIX = os.getenv("batch_transform_job_suffix")
 
         missing_variables = []
         if CLUSTER_MODEL_NAME is None:
@@ -6668,7 +6668,7 @@ Resources:
 
         BATCH_TRANSFORM_JOB_TIMEOUT = int(os.getenv("batch_transform_job_timeout"))
 
-        BATCH_TRANSFORM_JOB_SUFFIX = int(os.getenv("batch_transform_job_suffix"))
+        BATCH_TRANSFORM_JOB_SUFFIX = os.getenv("batch_transform_job_suffix")
 
         missing_variables = []
         if FLOW_MODEL_NAME is None:
