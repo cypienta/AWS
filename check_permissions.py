@@ -12,8 +12,15 @@ actions['autoscaling'] = [
     "autoscaling:DeleteAutoScalingGroup",
     "autoscaling:DeleteLaunchConfiguration",
     "autoscaling:DeleteTags",
-    "autoscaling:Describe*",
-    "autoscaling:UpdateAutoScalingGroup"]
+    "autoscaling:DescribeAutoScalingGroups",
+    "autoscaling:DescribeAutoScalingInstances",
+    "autoscaling:DescribeLaunchConfigurations",
+    "autoscaling:DescribeLoadBalancers",
+    "autoscaling:DescribeLoadBalancerTargetGroups",
+    "autoscaling:DescribeScalingActivities",
+    "autoscaling:DescribeTags",
+    "autoscaling:UpdateAutoScalingGroup",
+]
 
 actions['aws-marketplace'] = [
     "aws-marketplace:AcceptAgreementApprovalRequest",
@@ -25,7 +32,8 @@ actions['aws-marketplace'] = [
     "aws-marketplace:ListEntitlementDetails",
     "aws-marketplace:Subscribe",
     "aws-marketplace:Unsubscribe",
-    "aws-marketplace:ViewSubscriptions"]
+    "aws-marketplace:ViewSubscriptions",
+]
 
 actions['cloudformation'] = [
     "cloudformation:CancelUpdateStack",
@@ -53,9 +61,18 @@ actions['cloudformation'] = [
     "cloudformation:TagResource",
     "cloudformation:UntagResource",
     "cloudformation:UpdateStack",
-    "cloudformation:ValidateTemplate"]
+    "cloudformation:ValidateTemplate",
+]
 
-actions['cloudshell'] = ["cloudshell:*"]
+actions['cloudshell'] = [
+    "cloudshell:StartEnvironment",
+    "cloudshell:StopEnvironment",
+    "cloudshell:DeleteEnvironment",
+    "cloudshell:CreateSession",
+    "cloudshell:CreateEnvironment",
+    "cloudshell:GetEnvironmentStatus",
+    "cloudshell:PutCredentials",
+]
 
 actions['ec2'] = [
     "ec2:AssociateRouteTable",
@@ -79,7 +96,31 @@ actions['ec2'] = [
     "ec2:DeleteSubnet",
     "ec2:DeleteTags",
     "ec2:DeleteVpc",
-    "ec2:Describe*",
+    "ec2:DescribeInstances",
+    "ec2:DescribeInternetGateways",
+    "ec2:DescribeInstanceTypes",
+    "ec2:DescribeLaunchTemplates",
+    "ec2:DescribeLaunchTemplateVersions",
+    "ec2:DescribeNatGateways",
+    "ec2:DescribeNetworkAcls",
+    "ec2:DescribeRegions",
+    "ec2:DescribeRouteTables",
+    "ec2:DescribeSecurityGroups",
+    "ec2:DescribeSecurityGroupRules",
+    "ec2:DescribeSecurityGroupReferences",
+    "ec2:DescribeSubnets",
+    "ec2:DescribeTags",
+    "ec2:DescribeVpcAttribute",
+    "ec2:DescribeVolumeStatus",
+    "ec2:DescribeVolumesModifications",
+    "ec2:DescribeVolumes",
+    "ec2:DescribeVolumeAttribute",
+    "ec2:DescribeVpcEndpoints",
+    "ec2:DescribeVpcEndpointConnections",
+    "ec2:DescribeVpcEndpointServices",
+    "ec2:DescribeVpcs",
+    "ec2:DescribeVpnConnections",
+    "ec2:DescribeVpnGateways",
     "ec2:DetachInternetGateway",
     "ec2:DisassociateRouteTable",
     "ec2:DisassociateVpcCidrBlock",
@@ -90,10 +131,78 @@ actions['ec2'] = [
     "ec2:RunInstances",
     "ec2:StartInstances",
     "ec2:StopInstances",
-    "ec2:TerminateInstances"]
+    "ec2:TerminateInstances",
 
-actions['ecr'] = ["ecr:*"]
-actions['ecs'] = ["ecs:*"]
+    "ec2:DescribeImages",
+    "ec2:DescribeImageAttribute",
+    "ec2:DescribeImportImageTasks",
+    "ec2:DescribeAvailabilityZones",
+    "ec2:DescribeAddresses",
+    "ec2:DescribeEgressOnlyInternetGateways",
+    "ec2:DescribeInstanceAttribute",
+    "ec2:DescribeInstanceStatus",
+]
+
+actions['ecr'] = [
+    "ecr:CreateRepository",
+    "ecr:DescribeRepositories",
+    "ecr:DescribeImages",
+    "ecr:BatchCheckLayerAvailability",
+    "ecr:InitiateLayerUpload",
+    "ecr:UploadLayerPart",
+    "ecr:CompleteLayerUpload",
+    "ecr:PutImage",
+    "ecr:GetDownloadUrlForLayer",
+    "ecr:GetAuthorizationToken",
+    "ecr:ListImages",
+    "ecr:DeleteRepository",
+    "ecr:DeleteRepositoryPolicy",
+    "ecr:SetRepositoryPolicy",
+
+    "ecr:BatchGetImage",
+    "ecr:BatchDeleteImage",
+    "ecr:DescribeRegistry",
+    "ecr:GetRepositoryPolicy",
+]
+
+actions['ecs'] = [
+    "ecs:ListClusters",
+    "ecs:DescribeClusters",
+    "ecs:CreateCluster",
+    "ecs:DeleteCluster",
+    "ecs:PutClusterCapacityProviders",
+    "ecs:UpdateCluster",
+    "ecs:UpdateClusterSettings",
+    "ecs:ListServices",
+    "ecs:DescribeServices",
+    "ecs:CreateService",
+    "ecs:DeleteService",
+    "ecs:UpdateService",
+    "ecs:UpdateServicePrimaryTaskSet",
+    "ecs:ListTaskDefinitionFamilies",
+    "ecs:ListTaskDefinitions",
+    "ecs:ListTasks",
+    "ecs:DescribeTaskDefinition",
+    "ecs:DescribeTasks",
+    "ecs:DescribeTaskSets",
+    "ecs:CreateTaskSet",
+    "ecs:DeleteTaskDefinitions",
+    "ecs:DeleteTaskSet",
+    "ecs:DeregisterTaskDefinition",
+    "ecs:RegisterTaskDefinition",
+    "ecs:StopTask",
+    "ecs:SubmitTaskStateChange",
+    "ecs:UpdateTaskSet",
+    "ecs:ListServicesByNamespace",
+    "ecs:ListContainerInstances",
+    "ecs:ListAttributes",
+    "ecs:CreateCapacityProvider",
+    "ecs:DeleteCapacityProvider",
+    "ecs:UpdateCapacityProvider",
+    "ecs:TagResource",
+    "ecs:UntagResource",
+    "ecs:DescribeCapacityProviders"
+]
 
 actions['elasticloadbalancing'] = [
     "elasticloadbalancing:AddTags",
@@ -117,7 +226,8 @@ actions['elasticloadbalancing'] = [
     "elasticloadbalancing:ModifyLoadBalancerAttributes",
     "elasticloadbalancing:ModifyTargetGroup",
     "elasticloadbalancing:ModifyTargetGroupAttributes",
-    "elasticloadbalancing:RemoveTags"]
+    "elasticloadbalancing:RemoveTags",
+]
 
 actions['iam'] = [
     "iam:AddRoleToInstanceProfile",
@@ -153,7 +263,8 @@ actions['iam'] = [
     "iam:TagInstanceProfile",
     "iam:UntagInstanceProfile",
     "iam:UpdateAccessKey",
-    "iam:UpdateRole",]
+    "iam:UpdateRole",
+]
 
 actions['lambda'] = [
     "lambda:AddPermission",
@@ -161,13 +272,11 @@ actions['lambda'] = [
     "lambda:DeleteFunction",
     "lambda:DeleteFunctionConcurrency",
     "lambda:DeleteFunctionEventInvokeConfig",
+    "lambda:GetAccountSettings",
     "lambda:GetFunction",
     "lambda:GetFunctionConcurrency",
     "lambda:GetFunctionEventInvokeConfig",
     "lambda:GetLayerVersion",
-    "lambda:GetProvisionedConcurrencyConfig",
-    "lambda:InvokeAsync",
-    "lambda:InvokeFunction",
     "lambda:ListFunctionEventInvokeConfigs",
     "lambda:ListFunctions",
     "lambda:ListLayerVersions",
@@ -175,19 +284,20 @@ actions['lambda'] = [
     "lambda:ListTags",
     "lambda:PutFunctionConcurrency",
     "lambda:PutFunctionEventInvokeConfig",
-    "lambda:PutProvisionedConcurrencyConfig",
     "lambda:RemovePermission",
     "lambda:TagResource",
     "lambda:UntagResource",
     "lambda:UpdateFunctionCode",
     "lambda:UpdateFunctionConfiguration",
-    "lambda:UpdateFunctionEventInvokeConfig"]
+    "lambda:UpdateFunctionEventInvokeConfig",
+]
 
 actions['logs'] = [
     "logs:CreateLogGroup",
     "logs:DeleteLogGroup",
     "logs:DeleteSubscriptionFilter",
     "logs:DescribeLogGroups",
+    "logs:DescribeLogStreams",
     "logs:DescribeSubscriptionFilters",
     "logs:FilterLogEvents",
     "logs:GetLogEvents",
@@ -195,14 +305,8 @@ actions['logs'] = [
     "logs:ListTagsLogGroup",
     "logs:PutSubscriptionFilter",
     "logs:TagLogGroup",
-    "logs:UntagLogGroup"]
-
-actions['route53'] = [
-    "route53:CreateHostedZone",
-    "route53:DeleteHostedZone",
-    "route53:GetHealthCheck",
-    "route53:GetHostedZone",
-    "route53:ListHostedZonesByName"]
+    "logs:UntagLogGroup",
+]
 
 actions['s3'] = [
     "s3:CreateBucket",
@@ -214,8 +318,10 @@ actions['s3'] = [
     "s3:ListAllMyBuckets",
     "s3:ListBucket",
     "s3:PutBucketNotification",
-    "s3:PutBucketPolicy",
-    "s3:PutObject"]
+    "s3:PutObject",
+    "s3:ListBucketVersions",
+    "s3:DeleteObjectVersion",
+]
 
 actions['sagemaker'] = [
     "sagemaker:CreateModel",
@@ -226,23 +332,36 @@ actions['sagemaker'] = [
     "sagemaker:DescribeTransformJob",
     "sagemaker:ListModels",
     "sagemaker:ListTransformJobs",
-    "sagemaker:StopTransformJob"]
-
-actions['servicediscovery'] = [
-    "servicediscovery:CreatePrivateDnsNamespace",
-    "servicediscovery:CreateService",
-    "servicediscovery:DeleteService",
-    "servicediscovery:GetNamespace",
-    "servicediscovery:GetOperation",
-    "servicediscovery:GetService",
-    "servicediscovery:ListNamespaces",
-    "servicediscovery:ListServices",
-    "servicediscovery:UpdateService"]
+    "sagemaker:StopTransformJob",
+]
 
 actions['ssm'] = ["ssm:GetParameters"]
 
+actions['states'] = [
+    "states:ListExecutions",
+    "states:ListStateMachines",
+    "states:ListStateMachineVersions",
+    "states:ListTagsForResource",
+    "states:DescribeExecution",
+    "states:DescribeStateMachine",
+    "states:DescribeStateMachineForExecution",
+    "states:GetExecutionHistory",
+    "states:ValidateStateMachineDefinition",
+    "states:CreateStateMachine",
+    "states:DeleteStateMachine",
+    "states:DeleteStateMachineVersion",
+    "states:RedriveExecution",
+    "states:StartExecution",
+    "states:StopExecution",
+    "states:TestState",
+    "states:UpdateStateMachine",
+    "states:TagResource",
+    "states:UntagResource",
+]
+
 iam_client = boto3.client('iam')
 sts_client = boto3.client('sts')
+
 
 def get_current_identity():
     try:
@@ -250,6 +369,7 @@ def get_current_identity():
     except ClientError as e:
         print(f"Error getting identity: {e}")
         return None
+
 
 def check_permission(action):
     try:
@@ -293,6 +413,7 @@ def check_permission(action):
         print(f"Error checking permission for {action}: {e}")
         return False
 
+
 def main():
     identity = get_current_identity()
     if identity:
@@ -308,6 +429,6 @@ def main():
             print(f"  Action: {action} - Permission: {status}")
         print()
 
+
 if __name__ == '__main__':
     main()
-

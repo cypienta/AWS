@@ -46,17 +46,14 @@ Metadata:
           default: "Technique detector Batch Job Parameters"
         Parameters:
           - EnrichTechBatchInstanceType
-          - EnrichTechBatchTimeout
       - Label:
           default: "Temporal clustering Batch Job Parameters"
         Parameters:
           - ClusterBatchInstanceType
-          - ClusterBatchTimeout
       - Label:
           default: "Flow detector Batch Job Parameters"
         Parameters:
           - FlowBatchInstanceType
-          - FlowBatchTimeout
       - Label:
           default: "UI lambda function Parameters"
         Parameters:
@@ -66,8 +63,10 @@ Metadata:
       - Label:
           default: "Lambda Function Parameters"
         Parameters:
+          - StepFunctionName
           - SplunkInputFunctionName
           - VRLLambdaFunctionName
+          - SkipInputFunctionName
           - EnrichTechFunctionName
           - ProcessTechFunctionName
           - CreateClusterFunctionName
@@ -169,13 +168,6 @@ Parameters:
       - ml.p3.8xlarge
       - ml.p3.16xlarge
 
-  EnrichTechBatchTimeout:
-    Type: Number
-    Default: 3600
-    Description: Timeout in seconds for the enrich technology batch transform job. Minimum allowed value '1'. Maximum allowed value '3600'
-    MinValue: 1
-    MaxValue: 3600
-
   ClusterBatchInstanceType:
     Type: String
     Default: ml.p3.2xlarge
@@ -184,13 +176,6 @@ Parameters:
       - ml.p3.2xlarge
       - ml.p3.8xlarge
       - ml.p3.16xlarge
-
-  ClusterBatchTimeout:
-    Type: Number
-    Default: 3600
-    Description: Timeout in seconds for the cluster batch transform job. Minimum allowed value '1'. Maximum allowed value '3600'
-    MinValue: 1
-    MaxValue: 3600
 
   FlowBatchInstanceType:
     Type: String
@@ -217,17 +202,16 @@ Parameters:
       - ml.c4.8xlarge
       - ml.m4.16xlarge
 
-  FlowBatchTimeout:
-    Type: Number
-    Default: 3600
-    Description: Timeout in seconds for the flow batch transform job. Minimum allowed value '1'. Maximum allowed value '3600'
-    MinValue: 1
-    MaxValue: 3600
-
   FlowInputMaxClusters:
     Type: Number
     Description: Number of clusters as input to Flow detection model to be processed at a time for an input file
     Default: 5000
+
+  StepFunctionName:
+    Type: String
+    Default: step_function
+    Description: Name for step function state machine.
+    MinLength: 5
 
   SplunkInputFunctionName:
     Type: String
@@ -239,6 +223,12 @@ Parameters:
     Type: String
     Default: vrl_lambda
     Description: Function name for VRL transform.
+    MinLength: 5
+
+  SkipInputFunctionName:
+    Type: String
+    Default: skip_input
+    Description: Function name for skip input.
     MinLength: 5
 
   EnrichTechFunctionName:
@@ -408,7 +398,7 @@ Parameters:
   WebContainerImage: 
     Description: Container image for web app with tag market*
     Type: String
-    Default: "709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/cytech:marketv0.1.2"
+    Default: "709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/cytech:marketv0.2.2"
     AllowedPattern: "^[0-9]{12}.dkr.ecr.[a-z]{2}-[a-z]+-[0-9].amazonaws.com/[a-z0-9-]+/[a-z0-9-]+:[a-zA-Z0-9.-]+$"
 
   VPCNamePrefix:
@@ -584,10 +574,51 @@ Resources:
             Principal:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
+      Policies:
+        - PolicyName: AllowStepFunctionExecution
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - states:StartExecution
+                Resource: arn:aws:states:*
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonSageMakerServiceCatalogProductsLambdaServiceRolePolicy
         - arn:aws:iam::aws:policy/AmazonS3FullAccess
-  
+  StepFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: StepFunction
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogDelivery
+                  - logs:GetLogDelivery
+                  - logs:UpdateLogDelivery
+                  - logs:DeleteLogDelivery
+                  - logs:ListLogDeliveries
+                  - logs:PutResourcePolicy
+                  - logs:DescribeResourcePolicies
+                  - logs:DescribeLogGroups
+                  - lambda:InvokeFunction
+                  - sagemaker:DescribeTransformJob
+                  - xray:PutTraceSegments
+                  - xray:PutTelemetryRecords
+                  - xray:GetSamplingRules
+                  - xray:GetSamplingTargets
+                Resource: '*'
+
   TechModel:
     Type: AWS::SageMaker::Model
     Properties:
@@ -612,6 +643,387 @@ Resources:
       ExecutionRoleArn: !GetAtt SagemakerRole.Arn
       ModelName: !Ref FlowModelName
       EnableNetworkIsolation: true
+
+  skipInput:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Ref SkipInputFunctionName
+      Description: !Sub
+        - Stack ${AWS::StackName} Function ${ResourceName}
+        - ResourceName: skipInput
+      InlineCode: |
+        '''
+        Skip input file if one execution is running else start execution in step function.
+
+        Input: User input file
+        '''
+
+        import os
+        import json
+        import glob
+        import base64
+        import gzip
+
+        import urllib
+        import boto3
+        from botocore.exceptions import ClientError
+
+        BUCKET = os.getenv("bucket")
+
+        STEP_FUNCTION_ARN = os.getenv("step_function_arn")
+
+        missing_variables = []
+
+        if BUCKET is None:
+            missing_variables.append("bucket")
+        if STEP_FUNCTION_ARN is None:
+            missing_variables.append("step_function_arn")
+
+        if missing_variables:
+            raise ValueError(f"Please enter environment variable(s): {missing_variables}")
+
+        S3_CLIENT = boto3.client("s3")
+        STEP_CLIENT = boto3.client('stepfunctions')
+
+        SCRATCH_DIR = "scratch"
+
+        QUEUE_LOOKUP_FILE = f"{SCRATCH_DIR}/queue_lookup.json"
+
+        TEMP_QUEUE_LOOKUP_FILE = "/tmp/queue_lookup.json"
+
+
+        def lambda_handler(event, context):
+            '''
+            Entrypoint from the trigger setup from lambda
+            Args:
+                event: Event triggered
+                context: Context of the lambda function
+            '''
+            global S3_CLIENT
+            global BUCKET
+            global TEMP_QUEUE_LOOKUP_FILE
+            global QUEUE_LOOKUP_FILE
+            func = "lambda_handler"
+
+            try:
+
+                clear_temp_dir()
+
+                fetch_or_create_queue_lookup_file(BUCKET)
+
+                if 'Records' in event and 's3' in event['Records'][0]:
+                    print(f"{func}: Triggered by S3")
+                    handle_s3_input_trigger(event)
+                else:
+                    print(f"{func}: Triggered by cloudwatch")
+                    handle_cloud_watch_trigger(event)
+            except Exception as ex:
+                print(f"{func}: Exception occurred while running lambda function. Uploading error file to S3.")
+                error_message = f"Error occurred in lambda function: {context.function_name}. More details can be found in CloudWatch Logs for this lambda function. The exception message is: {ex}"
+                upload_error_to_s3(BUCKET, error_message)
+                raise ex
+
+
+        def handle_s3_input_trigger(event):
+            '''
+            Handle s3 input trigger
+            Args:
+                event: event from s3 object created trigger
+            '''
+            global S3_CLIENT
+            global STEP_CLIENT
+            global BUCKET
+            global TEMP_QUEUE_LOOKUP_FILE
+            global QUEUE_LOOKUP_FILE
+            global STEP_FUNCTION_ARN
+
+            func = "handle_s3_input_trigger"
+
+            input_filename = urllib.parse.unquote_plus(event["Records"][0]["s3"]["object"]["key"], encoding="utf-8")
+
+            skip_input = skip_processing_input_file(BUCKET, input_filename)
+
+            save_queue_lookup_file()
+
+            if skip_input:
+                print(f"{func}: Skipping current input")
+            else:
+                print(f"{func}: Process current input")
+
+                execution_input = {
+                    "bucket": BUCKET,
+                    "key": input_filename
+                }
+
+                try:
+                    response = STEP_CLIENT.start_execution(
+                        stateMachineArn=STEP_FUNCTION_ARN,
+                        input=json.dumps(execution_input)
+                    )
+
+                    print(f"Step Function execution started: {response['executionArn']}")
+
+                except Exception as e:
+                    print(f"{func}: Error starting Step Function execution")
+                    raise e
+
+
+        def handle_cloud_watch_trigger(event):
+            '''
+            Handle s3 input trigger
+            Args:
+                event: event from s3 object created trigger
+            '''
+            global S3_CLIENT
+            global BUCKET
+            global TEMP_QUEUE_LOOKUP_FILE
+            global QUEUE_LOOKUP_FILE
+
+            func = "handle_cloud_watch_trigger"
+
+            aws_log = event['awslogs']['data']
+            compressed_payload = base64.b64decode(aws_log)
+            uncompressed_payload = gzip.decompress(compressed_payload)
+            decoded_payload = json.loads(uncompressed_payload.decode('utf-8'))
+
+            print("Decoded CloudWatch data: ", decoded_payload)
+
+            message = decoded_payload["logEvents"][0]["message"]
+
+            try:
+                message_json = json.loads(message)
+            except json.JSONDecodeError as json_error:
+                print(f"Error parsing JSON from message: {message}")
+                raise json_error
+            except KeyError as key_error:
+                print("Missing key in JSON message")
+                raise key_error
+
+            queue_lookup_json = json.load(open(TEMP_QUEUE_LOOKUP_FILE, "r"))
+
+            if len(queue_lookup_json["input_queue"]) > 0:
+                print(f"{func}: Remove current input from input queue.")
+                queue_lookup_json["input_queue"].pop(0)
+                queue_lookup_json["prev"] = message_json["payload"]["prev"]
+                if "first" in message_json["payload"]:
+                    queue_lookup_json["first"] = message_json["payload"]["first"]
+                json.dump(queue_lookup_json, open(TEMP_QUEUE_LOOKUP_FILE, "w"))
+
+            save_queue_lookup_file()
+
+
+        def save_queue_lookup_file():
+            '''
+            Save queue lookup file to S3
+            '''
+            global BUCKET
+            global S3_CLIENT
+            global TEMP_QUEUE_LOOKUP_FILE
+            global QUEUE_LOOKUP_FILE
+            func = "save_queue_lookup_file"
+            print("Save queue lookup file")
+            try:
+                S3_CLIENT.upload_file(TEMP_QUEUE_LOOKUP_FILE, BUCKET, QUEUE_LOOKUP_FILE)
+            except Exception as e:
+                print(f"{func}: Failed to save file to S3: {BUCKET}/{QUEUE_LOOKUP_FILE}")
+                raise e
+
+
+        def skip_processing_input_file(bucket, input_filename):
+            '''
+            Check if current input file should be processed or skipped
+            Args:
+                bucket: Bucket name
+                input_filename: S3 object key of the input file on which lambda function is triggered
+            Returns:
+                true/false if current input processed should be skipped
+            '''
+            global S3_CLIENT
+            global SCRATCH_DIR
+            global TEMP_QUEUE_LOOKUP_FILE
+            func = "skip_processing_input_file"
+
+            skip_input = False
+
+            queue_lookup_json = json.load(open(TEMP_QUEUE_LOOKUP_FILE, "r"))
+
+            previous_input_last_batch_unique_id = queue_lookup_json["prev"]
+
+            input_queue_entry = f"{bucket}/{input_filename}"
+            print(f"{func}: Input queue entry: {input_queue_entry}")
+
+            if previous_input_last_batch_unique_id is None:
+                print(f"{func}: There are no previous batches to check")
+                skip_input = False
+
+                if len(queue_lookup_json["input_queue"]) > 0:
+                    print(f"{func}: Current input queue is not empty. Skip input processing.")
+                    skip_input = True
+                    if input_queue_entry not in queue_lookup_json["input_queue"]:
+                        print(f"{func}: Current input is not present in queue, push to queue.")
+                        queue_lookup_json["input_queue"].append(input_queue_entry)
+                else:
+                    print(f"{func}: Current input is not present in queue, push to queue.")
+                    queue_lookup_json["input_queue"].append(input_queue_entry)
+
+                print(f"{func}: Save any updates to queue lookup file")
+                json.dump(queue_lookup_json, open(TEMP_QUEUE_LOOKUP_FILE, "w"))
+                return skip_input
+
+            flow_output_for_previous_input_filename = f"{SCRATCH_DIR}/intermediate/{previous_input_last_batch_unique_id}/flow.json"
+            flow_output_for_previous_input_present = False
+            try:
+                print(f"{func}: Check if the flow output for previous input is available: {bucket}/{flow_output_for_previous_input_filename}")
+                S3_CLIENT.head_object(Bucket=bucket, Key=flow_output_for_previous_input_filename)
+                flow_output_for_previous_input_present = True
+            except ClientError as e:
+                if e.response['Error']['Code'] != '404':
+                    raise e
+
+                print(f"{func}: Flow output is not present for previous input. Cannot start processing current input.")
+                flow_output_for_previous_input_present = False
+
+            if not flow_output_for_previous_input_present:
+                if input_queue_entry not in queue_lookup_json["input_queue"]:
+                    print(f"{func}: Current input is not present in queue, push to queue.")
+                    queue_lookup_json["input_queue"].append(input_queue_entry)
+
+                skip_input = True
+
+            else:
+                print(f"{func}: Flow output for previous input is present. Start processing next input.")
+
+                if len(queue_lookup_json["input_queue"]) > 0:
+                    print(f"{func}: Next input to process is: {queue_lookup_json['input_queue'][0]}")
+                    if input_queue_entry == queue_lookup_json["input_queue"][0]:
+                        print(f"{func}: Current input is to be processed next.")
+                        skip_input = False
+                    else:
+                        print(f"{func}: Current input is not to be processed next.")
+                        skip_input = True
+                        if input_queue_entry not in queue_lookup_json["input_queue"]:
+                            print(f"{func}: Current input is not present in queue, push to queue.")
+                            queue_lookup_json["input_queue"].append(input_queue_entry)
+                else:
+                    print(f"{func}: There are no items in queue input. Current input is to be processed next.")
+                    skip_input = False
+                    print(f"{func}: Current input is not present in queue, push to queue.")
+                    queue_lookup_json["input_queue"].append(input_queue_entry)
+
+            print(f"{func}: Save any updated to queue lookup file")
+            json.dump(queue_lookup_json, open(TEMP_QUEUE_LOOKUP_FILE, "w"))
+
+            return skip_input
+
+
+        def fetch_or_create_queue_lookup_file(bucket):
+            '''
+            Check if the queue lookup file exists on S3. Create if it does not
+            Args:
+                bucket: The S3 bucket name
+            '''
+            global QUEUE_LOOKUP_FILE
+            global S3_CLIENT
+            global TEMP_QUEUE_LOOKUP_FILE
+
+            func = "fetch_or_create_queue_lookup_file"
+
+            try:
+                print(
+                    f"{func}: Checking if queue lookup file exists on S3 path {bucket}/{QUEUE_LOOKUP_FILE}")
+
+                S3_CLIENT.head_object(Bucket=bucket, Key=QUEUE_LOOKUP_FILE)
+
+            except ClientError as e:
+                if e.response['Error']['Code'] != '404':
+                    raise e
+
+                print(f"{func}: Queue lookup file does not exist on S3. Create empty table")
+
+                internal_id_to_unique_id_json = {"first": None, "prev": None, "input_queue": []}
+                json.dump(internal_id_to_unique_id_json, open(TEMP_QUEUE_LOOKUP_FILE, "w"))
+
+                print(f"{func}: Initiated queue lookup")
+            else:
+                try:
+                    print(f"{func}: Download available queue lookup file from S3")
+
+                    S3_CLIENT.download_file(bucket, QUEUE_LOOKUP_FILE, TEMP_QUEUE_LOOKUP_FILE)
+
+                    print(f"{func}: Download completed")
+                except Exception as e:
+                    print(f"{func}: Failed to download lookup file from S3: {bucket}/{QUEUE_LOOKUP_FILE}")
+                    raise e
+
+
+        def upload_error_to_s3(bucket, error_message):
+            '''
+            Upload error message to S3
+            Args:
+                error_message: The error message to upload
+                unique_id: Unique ID for identifying the error log
+            '''
+            global S3_CLIENT
+            error_log_key = "output/error_log.txt"
+            try:
+                S3_CLIENT.put_object(Bucket=bucket, Key=error_log_key, Body=error_message)
+                print(f"Uploaded error log to s3://{bucket}/{error_log_key}")
+            except Exception as e:
+                print(f"Failed to upload error log to S3. Error: {str(e)}")
+
+
+        def clear_temp_dir():
+            rm_list = glob.glob("/tmp/**", recursive=True)
+            for f in rm_list:
+                if os.path.isfile(f):
+                    os.remove(f)
+
+      Handler: index.lambda_handler
+      Runtime: python3.11
+      MemorySize: 3008
+      EphemeralStorage:
+        Size: 10240
+      ReservedConcurrentExecutions: 1
+      Timeout: 900
+      Role: !GetAtt LambdaRole.Arn
+      Tracing: Active
+      Layers:
+        - !FindInMap
+          - RegionMap
+          - !Ref AWS::Region
+          - lambdaLayer
+      Environment:
+        Variables:
+          bucket: !Ref BucketName
+          step_function_arn: !GetAtt stepFunction.Arn
+      Events:
+        S3ObjectCreated:
+          Type: S3
+          Properties:
+            Bucket: !Ref Bucket
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: input/
+                  - Name: suffix
+                    Value: .json
+        MyLogGroupTrigger:
+          Type: CloudWatchLogs
+          Properties:
+            LogGroupName: !Ref enrichWithTechniqueLogGroup
+            FilterPattern: "update queue lookup"
+  skipInputLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${skipInput}
+  skipInputLambdaEventInvokeConfig:
+    Type: AWS::Lambda::EventInvokeConfig
+    Properties:
+      FunctionName: !Ref skipInput
+      MaximumRetryAttempts: 0
+      Qualifier: $LATEST
 
   splunkInput:
     Type: AWS::Serverless::Function
@@ -1121,9 +1533,9 @@ Resources:
             CONFIG_EXISTS_IN_REQUEST = False
             NODE_FEATURE_EXISTS_IN_REQUEST = False
 
-            bucket = event["Records"][0]["s3"]["bucket"]["name"]
+            bucket = event["bucket"]
             try:
-                input_filename = urllib.parse.unquote_plus(event["Records"][0]["s3"]["object"]["key"], encoding="utf-8")
+                input_filename = event["key"]
 
                 # delete only the error txt files from output folder if present
                 delete_error_log_s3(bucket)
@@ -1133,24 +1545,6 @@ Resources:
                 initialize_sqlite(bucket)
 
                 fetch_or_create_queue_lookup_file(bucket)
-                skip_input = skip_processing_input_file(bucket, input_filename)
-
-                if skip_input:
-                    print(f"{func}: Skipping current input. Update queue lookup in S3")
-                    try:
-                        S3_CLIENT.upload_file(TEMP_QUEUE_LOOKUP_FILE, bucket, QUEUE_LOOKUP_FILE)
-                    except Exception as e:
-                        print(f"{func}: Failed to save file to S3: {bucket}/{QUEUE_LOOKUP_FILE}")
-                        raise e
-                    return
-                else:
-                    print(f"{func}: Process current input")
-                    queue_lookup_json = json.load(open(TEMP_QUEUE_LOOKUP_FILE, "r"))
-
-                    if len(queue_lookup_json["input_queue"]) > 0:
-                        print(f"{func}: Current input is present in input queue. Remove from input queue.")
-                        queue_lookup_json["input_queue"].pop(0)
-                        json.dump(queue_lookup_json, open(TEMP_QUEUE_LOOKUP_FILE, "w"))
 
                 try:
                     S3_CLIENT.download_file(bucket, input_filename, TEMP_INPUT_FILENAME)
@@ -1165,13 +1559,6 @@ Resources:
 
                 path_to_global_attribute_weights = f"{SCRATCH_DIR}/attribute_weights.json"
                 fetch_or_create_global_attribute_weights(bucket, path_to_global_attribute_weights)
-
-                # try:
-                #     print(f"{func}: Extract config and node_feature if present in the input file")
-                #     process_input_file_to_extract_config_and_node_feature()
-                # except Exception as e:
-                #     print("Failure while extracting config and node_feature from input file")
-                #     raise e
 
                 get_static_cluster_config()
 
@@ -1193,9 +1580,33 @@ Resources:
 
                 print(f"{func}: Chunks to process: {process_chunks}")
 
+                queue_lookup_json = json.load(open(TEMP_QUEUE_LOOKUP_FILE, "r"))
+
                 if not process_chunks:
                     print(f"{func}: Input file does not have any tranformed events that could be processed. Skip input file.")
-                    return
+                    payload_json = {"prev": queue_lookup_json["prev"]}
+                    log_json = {"message": "update queue lookup", "payload": payload_json}
+                    print(f"{json.dumps(log_json)}")
+
+                    if len(queue_lookup_json["input_queue"]) > 1:
+                        print(f"{func}: Next input file to process: {queue_lookup_json['input_queue'][1]}")
+                        try:
+                            print(f"{func}: Upload next input file in S3")
+                            next_input_queue_entry = queue_lookup_json["input_queue"][1]
+                            next_input_bucket = next_input_queue_entry.split("/")[0]
+                            next_input_key = "/".join(next_input_queue_entry.split("/")[1:])
+                            copy_source = {
+                                'Bucket': next_input_bucket,
+                                'Key': next_input_key
+                            }
+                            S3_CLIENT.copy_object(CopySource=copy_source, Bucket=next_input_bucket, Key=next_input_key,
+                                                  Metadata={'UpdatedAt': str(datetime.now())}, MetadataDirective='REPLACE')
+                        except Exception as e:
+                            print(f"{func}: Failed to save file to S3: {next_input_bucket}/{next_input_key}")
+                            raise e
+
+                    lambda_response = {"TransformJobName": "skipped_input"}
+                    return lambda_response
 
                 unique_ids = [str(uuid.uuid4()) for _ in process_chunks]
 
@@ -1211,8 +1622,7 @@ Resources:
                         raise e
 
                 first_batch_transform_job_started = False
-
-                queue_lookup_json = json.load(open(TEMP_QUEUE_LOOKUP_FILE, "r"))
+                lambda_response = {"TransformJobName": 'transform-job-cluster', "bucket": bucket, "input_first_unique_id": unique_ids[0]}
 
                 for i, chunk_of_large_input_file in enumerate(process_chunks):
 
@@ -1242,6 +1652,7 @@ Resources:
                     print(f"{func}: Starting batch job for enriching alerts with techniques")
                     response = enrich_alerts_with_techniques(bucket, chunk_of_large_input_file, unique_id, queue_json, first_batch_transform_job_started)
                     if response:
+                        lambda_response = {"TransformJobName": f'transform-job-tech-{unique_id}'}
                         first_batch_transform_job_started = True
                     print(f"{func}: Batch job created for enriching alerts with techniques")
 
@@ -1252,74 +1663,7 @@ Resources:
                 upload_error_to_s3(bucket, error_message)
                 raise ex
 
-
-        def skip_processing_input_file(bucket, input_filename):
-            '''
-            Check if current input file should be processed or skipped
-            Args:
-                bucket: Bucket name
-                input_filename: S3 object key of the input file on which lambda function is triggered
-            Returns:
-                true/false if current input processed should be skipped
-            '''
-            global S3_CLIENT
-            global SCRATCH_DIR
-            global TEMP_QUEUE_LOOKUP_FILE
-            func = "skip_processing_input_file"
-
-            skip_input = False
-
-            queue_lookup_json = json.load(open(TEMP_QUEUE_LOOKUP_FILE, "r"))
-
-            previous_input_last_batch_unique_id = queue_lookup_json["prev"]
-
-            if previous_input_last_batch_unique_id is None:
-                print(f"{func}: There are no previous batches to check. Start processing current input")
-                skip_input = False
-                return skip_input
-
-            input_queue_entry = f"{bucket}/{input_filename}"
-            print(f"{func}: Input queue entry: {input_queue_entry}")
-
-            flow_output_for_previous_input_filename = f"{SCRATCH_DIR}/intermediate/{previous_input_last_batch_unique_id}/flow.json"
-            flow_output_for_previous_input_present = False
-            try:
-                print(f"{func}: Check if the flow output for previous input is available: {bucket}/{flow_output_for_previous_input_filename}")
-                S3_CLIENT.head_object(Bucket=bucket, Key=flow_output_for_previous_input_filename)
-                flow_output_for_previous_input_present = True
-            except ClientError as e:
-                if e.response['Error']['Code'] != '404':
-                    raise e
-
-                print(f"{func}: Flow output is not present for previous input. Cannot start processing current input.")
-                flow_output_for_previous_input_present = False
-
-            if not flow_output_for_previous_input_present:
-                if input_queue_entry not in queue_lookup_json["input_queue"]:
-                    print(f"{func}: Current input is not present in queue, push to queue.")
-                    queue_lookup_json["input_queue"].append(input_queue_entry)
-
-                skip_input = True
-
-            else:
-                print(f"{func}: Flow output for previous input is present. Start processing next input.")
-
-                if len(queue_lookup_json["input_queue"]) > 0:
-                    print(f"{func}: Next input to process is: {queue_lookup_json['input_queue'][0]}")
-                    if input_queue_entry == queue_lookup_json["input_queue"][0]:
-                        print(f"{func}: Current input is to be processed next.")
-                        skip_input = False
-                    else:
-                        print(f"{func}: Current input is not to be processed next.")
-                        skip_input = True
-                else:
-                    print(f"{func}: There are no items in queue input. Current input is to be processed next.")
-                    skip_input = False
-
-            print(f"{func}: Save any updated to queue lookup file")
-            json.dump(queue_lookup_json, open(TEMP_QUEUE_LOOKUP_FILE, "w"))
-
-            return skip_input
+            return lambda_response
 
 
         def setup_batch_transform_job_for_enrich_alerts_with_techniques(bucket, unique_id):
@@ -2185,24 +2529,17 @@ Resources:
 
             queue_lookup_json = json.load(open(TEMP_QUEUE_LOOKUP_FILE, "r"))
 
+            payload_json = {}
+
             if queue_lookup_json["first"] is None:
+                payload_json["first"] = unique_ids[0]
                 queue_lookup_json["first"] = unique_ids[0]
 
-            # if queue_lookup_json["prev"] is not None:
-            #     prev_unique_id = queue_lookup_json["prev"]
-            #     next_for_prev_unique_id = unique_ids[0]
-                # queue_lookup_json[prev_unique_id] = next_for_prev_unique_id
-
             queue_lookup_json["prev"] = unique_ids[-1]
+            payload_json["prev"] = unique_ids[-1]
 
-            json.dump(queue_lookup_json, open(TEMP_QUEUE_LOOKUP_FILE, "w"))
-
-            print("Save queue lookup file")
-            try:
-                S3_CLIENT.upload_file(TEMP_QUEUE_LOOKUP_FILE, bucket, QUEUE_LOOKUP_FILE)
-            except Exception as e:
-                print(f"{func}: Failed to save file to S3: {bucket}/{QUEUE_LOOKUP_FILE}")
-                raise e
+            log_json = {"message": "update queue lookup", "payload": payload_json}
+            print(f"{json.dumps(log_json)}")
 
 
         def create_chunk_for_large_input_file():
@@ -2319,6 +2656,7 @@ Resources:
                 create_cluster_output_table = """
                 CREATE TABLE IF NOT EXISTS cluster_output (
                     cluster_id INTEGER PRIMARY KEY,
+                    campaign_id INTEGER UNIQUE,
                     cluster_starttime REAL,
                     cluster_endtime REAL,
                     cluster_srcips TEXT,
@@ -2342,6 +2680,7 @@ Resources:
                 CREATE TABLE IF NOT EXISTS event (
                     alert_id TEXT PRIMARY KEY,
                     cluster_id INTEGER,
+                    added_to_ui INTEGER DEFAULT 0,
                     src TEXT,
                     dst TEXT,
                     time REAL,
@@ -4327,27 +4666,14 @@ Resources:
       Environment:
         Variables:
           batch_transform_job_instance_type: !Ref EnrichTechBatchInstanceType
-          batch_transform_job_max_retries: "0"
-          batch_transform_job_timeout: !Ref EnrichTechBatchTimeout
+          batch_transform_job_max_retries: "1"
+          batch_transform_job_timeout: "3600"
           batch_transform_job_max_payload: "10"
           batch_transform_job_concurrent_transform: "1"
           technique_model_name: !Ref TechniqueModelName
           technique_lookup_object: !Ref TechniqueLookupObject
           chunk_size: !Ref ChunkSize
           encode_other_attrs: "true"
-      Events:
-        S3ObjectCreated:
-          Type: S3
-          Properties:
-            Bucket: !Ref Bucket
-            Events: s3:ObjectCreated:*
-            Filter:
-              S3Key:
-                Rules:
-                  - Name: prefix
-                    Value: input/
-                  - Name: suffix
-                    Value: .json
   enrichWithTechniqueLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
@@ -4449,9 +4775,9 @@ Resources:
             CLUSTER_CONFIG_EXISTS_IN_REQUEST = False
             NODE_FEATURE_EXISTS_IN_REQUEST = False
 
-            bucket = event["Records"][0]["s3"]["bucket"]["name"]
+            bucket, input_filename = get_output_object_key(event)
+
             try:
-                input_filename = urllib.parse.unquote_plus(event["Records"][0]["s3"]["object"]["key"], encoding="utf-8")
 
                 clear_temp_dir()
 
@@ -4476,7 +4802,7 @@ Resources:
 
                 print(f"{func}: Processing chunk file and enriching with techniques. unique ID: {unique_id}")
                 path_to_enriched_alerts_with_techniques = f"{SCRATCH_DIR}/output/classification/{unique_id}/input.json"
-                process_classification_output(bucket, unique_id, path_to_enriched_alerts_with_techniques)
+                lambda_response = process_classification_output(bucket, unique_id, path_to_enriched_alerts_with_techniques)
 
                 print(f"{func}: Enriched with techniques: {unique_id}")
             except Exception as ex:
@@ -4484,6 +4810,8 @@ Resources:
                 error_message = f"Error occurred in lambda function: {context.function_name}. More details can be found in CloudWatch Logs for this lambda function. The exception message is: {ex}"
                 upload_error_to_s3(bucket, error_message)
                 raise ex
+
+            return lambda_response
 
 
         def setup_batch_transform_job_for_enrich_alerts_with_techniques(bucket, unique_id):
@@ -4621,7 +4949,18 @@ Resources:
 
             update_lookup_table(bucket, unique_id, classification_response_df)
 
-            check_and_create_next_batch_transform_job_for_enrich_alerts_with_techniques(bucket)
+            tech_lambda_response = check_and_create_next_batch_transform_job_for_enrich_alerts_with_techniques(bucket)
+
+            lambda_response = {}
+            if tech_lambda_response is not None:
+                lambda_response["TransformJobName"] = tech_lambda_response
+            else:
+                current_queue_json = json.load(open(TEMP_QUEUE_FILENAME, "r"))
+                lambda_response["TransformJobName"] = "transform-job-cluster"
+                lambda_response["bucket"] = bucket
+                lambda_response["input_first_unique_id"] = current_queue_json["first"]
+
+            return lambda_response
 
 
         def check_and_create_next_batch_transform_job_for_enrich_alerts_with_techniques(bucket):
@@ -4629,6 +4968,7 @@ Resources:
             Check and create technique classification batch transform job
             Args:
                 bucket: Bucket name
+            Returns: lambda response with transform job name of tech model if started else None
             '''
             global TEMP_QUEUE_FILENAME
             global SCRATCH_DIR
@@ -4643,6 +4983,8 @@ Resources:
             next_input_dir = "/tmp/next/"
             os.makedirs(next_input_dir, exist_ok=True)
             temp_next_queue_json_filename = f"{next_input_dir}queue.json"
+
+            lambda_response = None
 
             while current_queue_json["next"] is not None:
                 next_unique_id = current_queue_json["next"]
@@ -4664,6 +5006,7 @@ Resources:
                         print(f"{func}: Next batch tranform job output file does not exist on S3. Create batch tranform job for: {next_unique_id}")
                         batch_transform_job = setup_batch_transform_job_for_enrich_alerts_with_techniques(bucket, next_unique_id)
                         SAGEMAKER.create_transform_job(**batch_transform_job)
+                        lambda_response = batch_transform_job["TransformJobName"]
                         break
                     except Exception as ex:
                         print(f"{func}: Failed to create batch trasnform job. Unique id: {next_unique_id}")
@@ -4678,6 +5021,8 @@ Resources:
                     raise e
 
                 current_queue_json = json.load(open(temp_next_queue_json_filename, "r"))
+            
+            return lambda_response
 
 
         def download_intermediate_input_files(bucket, unique_id):
@@ -4784,6 +5129,61 @@ Resources:
             print(json.dumps({"event": "update lookup from message", "message": message_body}))
 
 
+        def get_output_object_key(event):
+            '''
+            Get output object key from input and output s3 path
+            Args:
+                event: Input to lambda
+            Returns:
+                (bucket_name, object_key)
+            '''
+            func = "get_output_object_key"
+
+            input_bucket, input_key = parse_s3_path(event["inputPath"])
+
+            print(f"{func}: Input bucket: {input_bucket}")
+            print(f"{func}: Input key: {input_key}")
+
+            output_bucket, output_key = parse_s3_path(event["outputPath"])
+
+            print(f"{func}: Output bucket: {output_bucket}")
+            print(f"{func}: Output key: {output_key}")
+
+            if input_bucket is None or input_key is None or output_bucket is None or output_key is None:
+                raise ValueError("Failed to get output path of the batch transform job")
+
+            output_file_name = input_key.split("/")[-1] + ".out"
+            output_key += output_file_name
+
+            return output_bucket, output_key
+
+
+        def parse_s3_path(s3_path):
+            '''
+            Parse an S3 path and extract the bucket name and object key.
+            Args:
+                s3_path: The S3 path to parse. Should be in the format: s3://bucket-name/path/to/object
+            Returns:
+                (bucket_name, object_key).
+                (None, None) if the path is invalid.
+            '''
+            if not s3_path.startswith("s3://"):
+                return None, None
+
+            # Remove the "s3://" prefix
+            path_without_prefix = s3_path[5:]
+
+            # Split the remaining path into parts
+            parts = path_without_prefix.split('/', 1)
+
+            # If there's only one part, it means there's no object key
+            if len(parts) == 1:
+                return parts[0], None
+
+            # If there are two parts, the first is the bucket name, the second is the object key
+            return parts[0], parts[1]
+
+
         def upload_error_to_s3(bucket, error_message):
             '''
             Upload error message to S3
@@ -4822,24 +5222,11 @@ Resources:
       Environment:
         Variables:
           batch_transform_job_instance_type: !Ref EnrichTechBatchInstanceType
-          batch_transform_job_max_retries: "0"
-          batch_transform_job_timeout: !Ref EnrichTechBatchTimeout
+          batch_transform_job_max_retries: "1"
+          batch_transform_job_timeout: "3600"
           technique_model_name: !Ref TechniqueModelName
           batch_transform_job_max_payload: "10"
           batch_transform_job_concurrent_transform: "1"
-      Events:
-        S3ObjectCreated:
-          Type: S3
-          Properties:
-            Bucket: !Ref Bucket
-            Events: s3:ObjectCreated:*
-            Filter:
-              S3Key:
-                Rules:
-                  - Name: prefix
-                    Value: scratch/response/classification_out/
-                  - Name: suffix
-                    Value: .out
   processEnrichedWithTechniqueLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
@@ -4922,9 +5309,9 @@ Resources:
             global TEMP_INTERMEDIATE_QUEUE_FILENAME
             func = "lambda_handler"
 
-            bucket = event["Records"][0]["s3"]["bucket"]["name"]
+            bucket = event["bucket"]
             try:
-                input_filename = urllib.parse.unquote_plus(event["Records"][0]["s3"]["object"]["key"], encoding="utf-8")
+                input_filename = f"{SCRATCH_DIR}/output/classification/{event['input_first_unique_id']}/input.json"
 
                 clear_temp_dir()
 
@@ -4958,6 +5345,9 @@ Resources:
                 error_message = f"Error occurred in lambda function: {context.function_name}. More details can be found in CloudWatch Logs for this lambda function. The exception message is: {ex}"
                 upload_error_to_s3(bucket, error_message)
                 raise ex
+
+            lambda_response = {"TransformJobName": f'transform-job-cluster-{unique_id}'}
+            return lambda_response
 
 
         def setup_batch_transform_job_for_aggregate_and_cluster_alerts(bucket, unique_id, input_filename):
@@ -5141,22 +5531,9 @@ Resources:
       Environment:
         Variables:
           batch_transform_job_instance_type: !Ref ClusterBatchInstanceType
-          batch_transform_job_max_retries: "0"
-          batch_transform_job_timeout: !Ref ClusterBatchTimeout
+          batch_transform_job_max_retries: "1"
+          batch_transform_job_timeout: "3600"
           cluster_model_name: !Ref ClusterModelName
-      Events:
-        S3ObjectCreated:
-          Type: S3
-          Properties:
-            Bucket: !Ref Bucket
-            Events: s3:ObjectCreated:*
-            Filter:
-              S3Key:
-                Rules:
-                  - Name: prefix
-                    Value: scratch/output/classification/
-                  - Name: suffix
-                    Value: .json
   createClusterLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
@@ -5273,14 +5650,12 @@ Resources:
 
             CONFIG_EXISTS_IN_REQUEST = False
 
-            bucket = event["Records"][0]["s3"]["bucket"]["name"]
+            bucket, aggregate_and_cluster_alerts_output = get_output_object_key(event)
+
+            # bucket = event['Records'][0]['s3']['bucket']['name']
+            # aggregate_and_cluster_alerts_output = event['Records'][0]['s3']['object']['key']
+
             try:
-                aggregate_and_cluster_alerts_output = urllib.parse.unquote_plus(event["Records"][0]["s3"]["object"]["key"], encoding="utf-8")
-                # lambda_handler: input file: alert-bucket-v5/scratch/response/cluster_out/b34c3c0e-bcad-4646-893b-aa097dea12ca/input.zip.out
-                # lambda_handler: input file: alert-bucket-v5/scratch/response/cluster_out/665589b1-7948-477c-aabb-140f44d1f6f9/input.zip.out
-                # lambda_handler: input file: alert-bucket-v5/scratch/response/cluster_out/8629ad0e-35d6-4f52-9eaa-3444118036a2/input.zip.out
-                # bucket = "alert-bucket-v5"
-                # aggregate_and_cluster_alerts_output = "scratch/response/cluster_out/8629ad0e-35d6-4f52-9eaa-3444118036a2/input.zip.out"
 
                 clear_temp_dir()
 
@@ -5309,7 +5684,7 @@ Resources:
                 fetch_or_create_ticket_id_lookup_file(bucket)
 
                 print(f"{func}: Starting processing cluster output")
-                process_output_of_aggregate_and_cluster_alerts(bucket, unique_id, input_to_sequence_alerts)
+                lambda_response = process_output_of_aggregate_and_cluster_alerts(bucket, unique_id, input_to_sequence_alerts)
                 print(f"{func}: Completed processing")
 
                 try:
@@ -5326,6 +5701,8 @@ Resources:
                 error_message = f"Error occurred in lambda function: {context.function_name}. More details can be found in CloudWatch Logs for this lambda function. The exception message is: {ex}"
                 upload_error_to_s3(bucket, error_message)
                 raise ex
+
+            return lambda_response
 
 
         def setup_batch_transform_job_for_aggregate_and_cluster_alerts(bucket, unique_id, input_filename):
@@ -5446,6 +5823,8 @@ Resources:
             print(f"{func}: update cluster ticket output table with current batch output. create per per cluster metrics")
             update_cluster_ticket_output_sql(bucket, batch_cluster_id_list, metrics)
 
+            lambda_response = {}
+
             if queue_json["next"] is None:
                 print(f"{func}: Start flow detection as this is last chunk of input")
 
@@ -5487,13 +5866,20 @@ Resources:
                     print(f"{func}: Failed to upload file to S3: {bucket}/{input_to_sequence_alerts}")
                     raise e
 
+                lambda_response["TransformJobName"] = "transform-job-flow"
+                lambda_response["bucket"] = bucket
+                lambda_response["input_path"] = input_to_sequence_alerts
+
             else:
                 print(f"{func}: Start batch transform job for next aggregate and cluster and alerts")
                 batch_transform_job_creation_response = aggregate_and_cluster_alerts(bucket, queue_json["next"])
                 if batch_transform_job_creation_response is not None:
                     print(f"{func}: Created batch transform job for next aggregate and cluster alerts: {batch_transform_job_creation_response['TransformJobArn']}")
+                    lambda_response["TransformJobName"] = f'transform-job-cluster-{queue_json["next"]}'
                 else:
                     print(f"{func}: Skip creating next cluster batch transform job")
+
+            return lambda_response
 
 
         def aggregate_and_cluster_alerts(bucket, unique_id):
@@ -6574,6 +6960,61 @@ Resources:
             return results
 
 
+        def get_output_object_key(event):
+            '''
+            Get output object key from input and output s3 path
+            Args:
+                event: Input to lambda
+            Returns:
+                (bucket_name, object_key)
+            '''
+            func = "get_output_object_key"
+
+            input_bucket, input_key = parse_s3_path(event["inputPath"])
+
+            print(f"{func}: Input bucket: {input_bucket}")
+            print(f"{func}: Input key: {input_key}")
+
+            output_bucket, output_key = parse_s3_path(event["outputPath"])
+
+            print(f"{func}: Output bucket: {output_bucket}")
+            print(f"{func}: Output key: {output_key}")
+
+            if input_bucket is None or input_key is None or output_bucket is None or output_key is None:
+                raise ValueError("Failed to get output path of the batch transform job")
+
+            output_file_name = input_key.split("/")[-1] + ".out"
+            output_key += output_file_name
+
+            return output_bucket, output_key
+
+
+        def parse_s3_path(s3_path):
+            '''
+            Parse an S3 path and extract the bucket name and object key.
+            Args:
+                s3_path: The S3 path to parse. Should be in the format: s3://bucket-name/path/to/object
+            Returns:
+                (bucket_name, object_key).
+                (None, None) if the path is invalid.
+            '''
+            if not s3_path.startswith("s3://"):
+                return None, None
+
+            # Remove the "s3://" prefix
+            path_without_prefix = s3_path[5:]
+
+            # Split the remaining path into parts
+            parts = path_without_prefix.split('/', 1)
+
+            # If there's only one part, it means there's no object key
+            if len(parts) == 1:
+                return parts[0], None
+
+            # If there are two parts, the first is the bucket name, the second is the object key
+            return parts[0], parts[1]
+
+
         def upload_error_to_s3(bucket, error_message):
             '''
             Upload error message to S3
@@ -6612,23 +7053,10 @@ Resources:
       Environment:
         Variables:
           batch_transform_job_instance_type: !Ref ClusterBatchInstanceType
-          batch_transform_job_max_retries: "0"
-          batch_transform_job_timeout: !Ref ClusterBatchTimeout
+          batch_transform_job_max_retries: "1"
+          batch_transform_job_timeout: "3600"
           cluster_model_name: !Ref ClusterModelName
           flow_input_window_size: !Ref FlowInputMaxClusters
-      Events:
-        S3ObjectCreated:
-          Type: S3
-          Properties:
-            Bucket: !Ref Bucket
-            Events: s3:ObjectCreated:*
-            Filter:
-              S3Key:
-                Rules:
-                  - Name: prefix
-                    Value: scratch/response/cluster_out/
-                  - Name: suffix
-                    Value: .out
   processClusterLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
@@ -6700,10 +7128,12 @@ Resources:
             func = "lambda_handler"
 
             sagemaker = boto3.client(service_name='sagemaker')
-            bucket = event["Records"][0]["s3"]["bucket"]["name"]
+            bucket = event["bucket"]
 
-            try: 
-                input_filename = urllib.parse.unquote_plus(event["Records"][0]["s3"]["object"]["key"], encoding="utf-8")
+            lambda_response = None
+
+            try:
+                input_filename = event["input_path"]
 
                 clear_temp_dir()
 
@@ -6718,6 +7148,8 @@ Resources:
                     batch_transform_job = setup_batch_transform_job_for_sequence_alerts(bucket, unique_id, input_filename)
                     batch_transform_job_creation_response = sagemaker.create_transform_job(**batch_transform_job)
 
+                    lambda_response = {"TransformJobName": batch_transform_job["TransformJobName"]}
+
                     print(f"{func}: Created batch transform job for sequence alerts: {batch_transform_job_creation_response['TransformJobArn']}")
 
                 except Exception as e:
@@ -6728,6 +7160,8 @@ Resources:
                 error_message = f"Error occurred in lambda function: {context.function_name}. More details can be found in CloudWatch Logs for this lambda function. The exception message is: {ex}"
                 upload_error_to_s3(bucket, error_message)
                 raise ex
+
+            return lambda_response
 
 
         def setup_batch_transform_job_for_sequence_alerts(bucket, unique_id, input_filename):
@@ -6824,22 +7258,9 @@ Resources:
       Environment:
         Variables:
           batch_transform_job_instance_type: !Ref FlowBatchInstanceType
-          batch_transform_job_max_retries: "0"
-          batch_transform_job_timeout: !Ref FlowBatchTimeout
+          batch_transform_job_max_retries: "1"
+          batch_transform_job_timeout: "3600"
           flow_model_name: !Ref FlowModelName
-      Events:
-        S3ObjectCreated:
-          Type: S3
-          Properties:
-            Bucket: !Ref Bucket
-            Events: s3:ObjectCreated:*
-            Filter:
-              S3Key:
-                Rules:
-                  - Name: prefix
-                    Value: scratch/output/cluster/
-                  - Name: suffix
-                    Value: .json
   createFlowLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
@@ -6952,9 +7373,12 @@ Resources:
 
             NODE_FEATURE_EXISTS_IN_REQUEST = False
 
-            bucket = event["Records"][0]["s3"]["bucket"]["name"]
+            bucket, sequence_alerts_output = get_output_object_key(event)
+
+            # bucket = event['Records'][0]['s3']['bucket']['name']
+            # sequence_alerts_output = event['Records'][0]['s3']['object']['key']
+
             try:
-                sequence_alerts_output = urllib.parse.unquote_plus(event["Records"][0]["s3"]["object"]["key"], encoding="utf-8")
 
                 clear_temp_dir()
 
@@ -6980,7 +7404,7 @@ Resources:
                 fetch_or_create_ticket_id_lookup_file(bucket)
 
                 print(f"{func}: Starting processing flow output")
-                process_output_of_sequence_alerts(bucket, unique_id)
+                output_filename = process_output_of_sequence_alerts(bucket, unique_id)
                 print(f"{func}: Completed processing flow output")
 
                 try:
@@ -6997,6 +7421,9 @@ Resources:
                 error_message = f"Error occurred in lambda function: {context.function_name}. More details can be found in CloudWatch Logs for this lambda function. The exception message is: {ex}"
                 upload_error_to_s3(bucket, error_message)
                 raise ex
+
+            lambda_response = {"bucket": bucket, "input_path": output_filename}
+            return lambda_response
 
 
         def process_output_of_sequence_alerts(bucket, unique_id):
@@ -7083,9 +7510,7 @@ Resources:
                 print(f"{func}: Failed to save file to S3: {bucket}/{output_filename}")
                 raise e
 
-            print(f"{func}: Save ticket output")
-            log_json = {"message": "saved ticket output", "bucket": bucket, "key": output_filename}
-            print(f"{json.dumps(log_json)}")
+            print(f"{func}: Saved ticket output")
 
             print(f"{func}: Check if next input is present to start processing")
             queue_lookup_json = json.load(open(TEMP_QUEUE_LOOKUP_FILE, "r"))
@@ -7101,10 +7526,13 @@ Resources:
                         'Bucket': next_input_bucket,
                         'Key': next_input_key
                     }
-                    S3_CLIENT.copy(copy_source, next_input_bucket, next_input_key)
+                    S3_CLIENT.copy_object(CopySource=copy_source, Bucket=next_input_bucket, Key=next_input_key,
+                                          Metadata={'UpdatedAt': str(datetime.now())}, MetadataDirective='REPLACE')
                 except Exception as e:
                     print(f"{func}: Failed to save file to S3: {next_input_bucket}/{next_input_key}")
                     raise e
+
+            return output_filename
 
 
         def update_global_feature_node_sql():
@@ -7704,6 +8132,61 @@ Resources:
                     raise e
 
 
+        def get_output_object_key(event):
+            '''
+            Get output object key from input and output s3 path
+            Args:
+                event: Input to lambda
+            Returns:
+                (bucket_name, object_key)
+            '''
+            func = "get_output_object_key"
+
+            input_bucket, input_key = parse_s3_path(event["inputPath"])
+
+            print(f"{func}: Input bucket: {input_bucket}")
+            print(f"{func}: Input key: {input_key}")
+
+            output_bucket, output_key = parse_s3_path(event["outputPath"])
+
+            print(f"{func}: Output bucket: {output_bucket}")
+            print(f"{func}: Output key: {output_key}")
+
+            if input_bucket is None or input_key is None or output_bucket is None or output_key is None:
+                raise ValueError("Failed to get output path of the batch transform job")
+
+            output_file_name = input_key.split("/")[-1] + ".out"
+            output_key += output_file_name
+
+            return output_bucket, output_key
+
+
+        def parse_s3_path(s3_path):
+            '''
+            Parse an S3 path and extract the bucket name and object key.
+            Args:
+                s3_path: The S3 path to parse. Should be in the format: s3://bucket-name/path/to/object
+            Returns:
+                (bucket_name, object_key).
+                (None, None) if the path is invalid.
+            '''
+            if not s3_path.startswith("s3://"):
+                return None, None
+
+            # Remove the "s3://" prefix
+            path_without_prefix = s3_path[5:]
+
+            # Split the remaining path into parts
+            parts = path_without_prefix.split('/', 1)
+
+            # If there's only one part, it means there's no object key
+            if len(parts) == 1:
+                return parts[0], None
+
+            # If there are two parts, the first is the bucket name, the second is the object key
+            return parts[0], parts[1]
+
+
         def upload_error_to_s3(bucket, error_message):
             '''
             Upload error message to S3
@@ -7743,19 +8226,6 @@ Resources:
         Variables:
           campaign_map: !Ref ClusterOrFlowMapToCampaign
           flow_input_window_size: !Ref FlowInputMaxClusters
-      Events:
-        S3ObjectCreated:
-          Type: S3
-          Properties:
-            Bucket: !Ref Bucket
-            Events: s3:ObjectCreated:*
-            Filter:
-              S3Key:
-                Rules:
-                  - Name: prefix
-                    Value: scratch/response/flow_out/
-                  - Name: suffix
-                    Value: .out
   processFlowLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
@@ -8005,6 +8475,8 @@ Resources:
         import time
         import urllib
         import glob
+        import sqlite3
+        from contextlib import closing
 
         import boto3
         import pandas as pd
@@ -8020,7 +8492,7 @@ Resources:
 
         UI_PASSWORD = os.getenv("ui_password")
 
-        CAMPAIGN_MAP = os.getenv("campaign_map").lower()
+        CAMPAIGN_MAP = os.getenv("campaign_map")
 
         missing_variables = []
         if UI_LB_URL is None:
@@ -8039,23 +8511,26 @@ Resources:
         if missing_variables:
             raise ValueError(f"Please enter environment variable(s): {missing_variables}")
 
+        CAMPAIGN_MAP = CAMPAIGN_MAP.lower()
         if CAMPAIGN_MAP not in ["flow", "cluster"]:
             raise ValueError(f"Valid values for 'campaign_map' environemnt variable are 'flow', 'cluster'. Entered value is: '{CAMPAIGN_MAP}'")
+
+        HOST = f"http://{UI_LB_URL}:8000/"
+
+        S3_CLIENT = boto3.client("s3")
 
         CONTENT_TYPE = "application/json"
 
         SCRATCH_DIR = "scratch"
+
+        PATH_TO_SQLITE = f"{SCRATCH_DIR}/cypienta.db"
+        TEMP_SQLITE_FILENAME = "/tmp/cypienta.db"
 
         TEMP_CLUSTER_TICKET_OUTPUT = "/tmp/cluster_ticket_output.json"
         TEMP_FLOW_TICKET_OUTPUT = "/tmp/flow_ticket_output.json"
 
         TEMP_GLOBAL_METRICS_FILENAME = "/tmp/global_metrics.json"
         TEMP_GLOBAL_FEATURE_FILENAME = "/tmp/global_feature.json"
-
-        HOST = f"http://{UI_LB_URL}:8000/"
-
-        S3_CLIENT = boto3.client("s3")
-
 
         def lambda_handler(event, context):
             '''
@@ -8070,12 +8545,17 @@ Resources:
             global S3_CLIENT
             global TEMP_GLOBAL_METRICS_FILENAME
             global TEMP_GLOBAL_FEATURE_FILENAME
+            global PATH_TO_SQLITE
+            global TEMP_SQLITE_FILENAME
 
             func = "lambda_handler"
 
-            bucket = event["Records"][0]["s3"]["bucket"]["name"]
+            # bucket = event['Records'][0]['s3']['bucket']['name']
+            # input_file = event['Records'][0]['s3']['object']['key']
+
+            bucket = event["bucket"]
             try:
-                input_file = urllib.parse.unquote_plus(event["Records"][0]["s3"]["object"]["key"], encoding="utf-8")
+                input_file = event["input_path"]
 
                 clear_temp_dir()
                 unique_id = input_file.split("/")[-2]
@@ -8092,7 +8572,7 @@ Resources:
                 except Exception as e:
                     print(f"{func}: Failed to download file from S3: {bucket}/{input_file}")
                     raise e
-                
+
                 if CAMPAIGN_MAP == "flow":
                     try:
                         print(f"{func}: Download intermediate file")
@@ -8101,6 +8581,14 @@ Resources:
                     except Exception as e:
                         print(f"{func}: Failed to download file from S3: {bucket}/{cluster_ticket_output_file}")
                         raise e
+
+                try:
+                    print(f"{func}: Download sqlite file from S3")
+                    S3_CLIENT.download_file(bucket, PATH_TO_SQLITE, TEMP_SQLITE_FILENAME)
+                except Exception as e:
+                    print(f"{func}: Failed to download file: {bucket}/{PATH_TO_SQLITE}")
+                    raise e
+
                 global_metrics_filename = f"{SCRATCH_DIR}/intermediate/{unique_id}/global_metrics.json"
                 try:
                     print(f"{func}: Download the global metrics file")
@@ -8121,6 +8609,16 @@ Resources:
                 print("Starting campaign creation")
                 create_campaigns()
                 print(f"{func}: Complete campaign creation")
+
+                try:
+                    print(f"{func}: Upload sqlite to S3")
+
+                    S3_CLIENT.upload_file(TEMP_SQLITE_FILENAME, bucket, PATH_TO_SQLITE)
+
+                    print(f"{func}: Upload completed")
+                except Exception as e:
+                    print(f"{func}: Failed to upload sqlite from S3: {bucket}/{PATH_TO_SQLITE}")
+                    raise e
             except Exception as ex:
                 print(f"{func}: Exception occurred while running lambda function. Uploading error file to S3.")
                 error_message = f"Error occurred in lambda function: {context.function_name}. More details can be found in CloudWatch Logs for this lambda function. The exception message is: {ex}"
@@ -8230,38 +8728,112 @@ Resources:
             global EVENT_THRESHOLD
             global HOST
             func = "create_campaign_for_cluster"
+
+            # will have only 1 row as result because of filter on single cluster and group by on same cluster
+            select_cluster_event = """
+            SELECT
+                co.cluster_id,
+                co.campaign_id,
+                GROUP_CONCAT(e.alert_id) AS alert_ids
+            FROM event e
+            INNER JOIN cluster_output co
+            ON co.cluster_id = e.cluster_id
+            WHERE e.added_to_ui = 0 AND co.cluster_id = :cluster_id
+            GROUP BY co.cluster_id
+            ;
+            """
+
+            update_cluster_output_campaign_id = """
+            UPDATE cluster_output
+            SET campaign_id = :campaign_id
+            WHERE cluster_id = :cluster_id
+            ;
+            """
+
+            update_event_added_to_ui = """
+            UPDATE event
+            SET added_to_ui = 1
+            WHERE cluster_id = :cluster_id
+            ;
+            """
+
             try:
 
-                with open(TEMP_CLUSTER_TICKET_OUTPUT, "r") as f:
-                    for line in f:
-                        row_cluster = json.loads(line)
+                with closing(sqlite3.connect(TEMP_SQLITE_FILENAME)) as conn:
+                    conn.row_factory = sqlite3.Row
+                    conn.execute("PRAGMA foreign_keys = ON;")
+                    with closing(conn.cursor()) as cursor:
+                        with open(TEMP_CLUSTER_TICKET_OUTPUT, "r") as f:
+                            for line in f:
+                                row_cluster = json.loads(line)
 
-                        print(f"{func}: Evaluating for {CAMPAIGN_MAP}: {row_cluster['cluster_id']}")
+                                print(f"{func}: Evaluating for {CAMPAIGN_MAP}: {row_cluster['cluster_id']}")
 
-                        involved_events_df = pd.DataFrame(row_cluster["involved_events"])
+                                involved_events_df = pd.DataFrame(row_cluster["involved_events"])
 
-                        involved_events_df['time_df'] = pd.to_datetime(involved_events_df['time'], unit="s")
-                        involved_events_df['time_df'] = involved_events_df['time_df'].dt.strftime('%Y-%m-%d %H:%M:%S')
+                                # filter out involved events that are already added to UI
+                                param = {"cluster_id": row_cluster['cluster_id']}
+                                cursor.execute(select_cluster_event, param)
 
-                        events = create_events_list_for_ui(involved_events_df)
+                                result = cursor.fetchone()
+                                if result is None:
+                                    continue
+                                row = dict(result)
+                                alert_ids_list = row["alert_ids"].split(",")
 
-                        if len(events) < EVENT_THRESHOLD:
-                            print(
-                                f"{func}: Length of list of events is less than threshold set. Skip creation of campaign. length: {len(events)}")
-                            continue
+                                # will have atleast 1 new event to upload to UI
+                                involved_events_df = involved_events_df[involved_events_df["id"].isin(alert_ids_list)]
 
-                        files, payload = create_payload_to_create_campaign_and_events_in_ui(events, row_cluster['cluster_id'])
+                                involved_events_df['time_df'] = pd.to_datetime(involved_events_df['time'], unit="s")
+                                involved_events_df['time_df'] = involved_events_df['time_df'].dt.strftime('%Y-%m-%d %H:%M:%S')
 
-                        print(f"{func}: Sending campaign create request")
+                                events = create_events_list_for_ui(involved_events_df)
 
-                        try:
-                            response_from_ui = ui_session.post(f"{HOST}api/v2/campaign/", data=payload, files=files, cookies=ui_cookies, headers=ui_headers)
-                            print(f"{func}: Got response", response_from_ui)
-                            response_from_ui.raise_for_status()
-                            print(f"{func}: Campaign creation successful")
-                        except Exception as e:
-                            print(f"{func}: Failed to create campaign")
-                            raise e
+                                if len(events) < EVENT_THRESHOLD:
+                                    print(
+                                        f"{func}: Length of list of events is less than threshold set. Skip creation of campaign. length: {len(events)}")
+                                    continue
+
+                                files, payload = create_payload_to_create_campaign_and_events_in_ui(events, row_cluster['cluster_id'])
+
+                                if row["campaign_id"] is None:
+                                    print(f"{func}: Create campaign")
+                                    try:
+                                        response_from_ui = ui_session.post(f"{HOST}api/v2/campaign/", data=payload, files=files, cookies=ui_cookies, headers=ui_headers)
+
+                                        print(f"{func}: Got response", response_from_ui)
+                                        response_from_ui.raise_for_status()
+
+                                        print(f"{func}: Campaign creation successful")
+                                        response_from_ui = json.loads(response_from_ui.content)
+                                        campaign_id = response_from_ui["id"]
+                                        print("Campaign id: ", campaign_id)
+
+                                        update_cluster_output_campaign_id_param = {
+                                            "cluster_id": row_cluster['cluster_id'],
+                                            "campaign_id": campaign_id
+                                        }
+                                        cursor.execute(update_cluster_output_campaign_id, update_cluster_output_campaign_id_param)
+
+                                    except Exception as e:
+                                        print(f"{func}: Failed to create campaign")
+                                        raise e
+                                else:
+                                    print(f"{func}: Update campaign: {row['campaign_id']}")
+                                    try:
+                                        response_from_ui = ui_session.put(f"{HOST}api/v2/campaign/{row['campaign_id']}/", data=payload, files=files, cookies=ui_cookies, headers=ui_headers)
+                                        print(f"{func}: Got response", response_from_ui)
+                                        response_from_ui.raise_for_status()
+
+                                    except Exception as e:
+                                        print(f"{func}: Failed to update campaign")
+                                        raise e
+
+                                # update only those events that were added per cluster. in case the cluster has 1 event its not added. but it could get more events in next batch.
+                                update_event_added_to_ui_param = {"cluster_id": row_cluster['cluster_id']}
+                                cursor.execute(update_event_added_to_ui, update_event_added_to_ui_param)
+
+                        conn.commit()
 
             except requests.exceptions.RequestException as req_err:
                 print("Request error occurred.")
@@ -8342,11 +8914,15 @@ Resources:
                 payload: JSON object to create campaign
             '''
             global CAMPAIGN_MAP
+
+            req_gzip_filename = f"/tmp/req.gzip"
+
             req = json.dumps(events)
             req = gzip.compress(bytes(req, "utf-8"))
-            open("/tmp/req.gzip", "wb").write(req)
+            open(req_gzip_filename, "wb").write(req)
             payload = {"name": f"{CAMPAIGN_MAP}-{campaign}", "description": "automatically created alerts", "auto_extract_iocs": "true"}
-            files = [('details', ('req.gzip', open('/tmp/req.gzip', 'rb'), 'application/octet-stream'))]
+            files = [('details', ('req.gzip', open(req_gzip_filename, 'rb'), 'application/octet-stream'))]
+
             return files, payload
 
 
@@ -8477,19 +9053,6 @@ Resources:
           ui_lb_url: !GetAtt LoadBalancer.DNSName 
           ui_password: !Ref SuperuserPassword
           ui_username: !Ref SuperuserUsername
-      Events:
-        S3ObjectCreated:
-          Type: S3
-          Properties:
-            Bucket: !Ref Bucket
-            Events: s3:ObjectCreated:*
-            Filter:
-              S3Key:
-                Rules:
-                  - Name: prefix
-                    Value: scratch/output/flow/
-                  - Name: suffix
-                    Value: .json
   createCampaignLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
@@ -9494,6 +10057,431 @@ Resources:
       MaximumRetryAttempts: 0
       Qualifier: $LATEST
 
+  stepFunction:
+    Type: 'AWS::StepFunctions::StateMachine'
+    Properties:
+      StateMachineName: !Ref StepFunctionName
+      RoleArn: !GetAtt StepFunctionRole.Arn
+      LoggingConfiguration:
+        Level: ALL
+        IncludeExecutionData: true
+        Destinations:
+          - CloudWatchLogsLogGroup:
+              LogGroupArn: !GetAtt StepFunctionLogGroup.Arn
+      DefinitionString: !Sub |
+        {
+          "Comment": "A description of my state machine",
+          "StartAt": "enrich_with_technique",
+          "States": {
+            "enrich_with_technique": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "OutputPath": "$.Payload",
+              "Parameters": {
+                "FunctionName": "${enrichWithTechnique.Arn}",
+                "Payload.$": "$"
+              },
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                    "Lambda.TooManyRequestsException"
+                  ],
+                  "IntervalSeconds": 1,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2
+                }
+              ],
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "Next": "Fail"
+                }
+              ],
+              "Next": "tech_or_cluster"
+            },
+            "wait technique job": {
+              "Type": "Wait",
+              "Next": "technique_tranform_job",
+              "Seconds": 300
+            },
+            "technique_tranform_job": {
+              "Type": "Task",
+              "Parameters": {
+                "TransformJobName.$": "$.TransformJobName"
+              },
+              "Resource": "arn:aws:states:::aws-sdk:sagemaker:describeTransformJob",
+              "Next": "technique Job Complete?",
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "BackoffRate": 2,
+                  "IntervalSeconds": 1,
+                  "MaxAttempts": 2
+                }
+              ]
+            },
+            "technique Job Complete?": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.TransformJobStatus",
+                  "StringEquals": "Failed",
+                  "Next": "Fail"
+                },
+                {
+                  "Variable": "$.TransformJobStatus",
+                  "StringEquals": "Completed",
+                  "Next": "process_enriched_with_technique"
+                },
+                {
+                  "Variable": "$.TransformJobStatus",
+                  "StringEquals": "Stopped",
+                  "Next": "Fail"
+                }
+              ],
+              "Default": "wait technique job"
+            },
+            "process_enriched_with_technique": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "OutputPath": "$.Payload",
+              "Parameters": {
+                "FunctionName": "${processEnrichedWithTechnique.Arn}",
+                "Payload": {
+                  "inputPath.$": "$.TransformInput.DataSource.S3DataSource.S3Uri",
+                  "outputPath.$": "$.TransformOutput.S3OutputPath"
+                }
+              },
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                    "Lambda.TooManyRequestsException"
+                  ],
+                  "IntervalSeconds": 1,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2
+                }
+              ],
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "Next": "Fail"
+                }
+              ],
+              "Next": "tech_or_cluster"
+            },
+            "tech_or_cluster": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.TransformJobName",
+                  "StringMatches": "*job-tech*",
+                  "Next": "wait technique job"
+                },
+                {
+                  "Variable": "$.TransformJobName",
+                  "StringMatches": "*job-cluster*",
+                  "Next": "create_cluster"
+                },
+                {
+                  "Variable": "$.TransformJobName",
+                  "StringEquals": "skipped_input",
+                  "Next": "Success"
+                }
+              ],
+              "Default": "Fail"
+            },
+            "create_cluster": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "OutputPath": "$.Payload",
+              "Parameters": {
+                "Payload.$": "$",
+                "FunctionName": "${createCluster.Arn}"
+              },
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                    "Lambda.TooManyRequestsException"
+                  ],
+                  "IntervalSeconds": 1,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2
+                }
+              ],
+              "Next": "wait cluster job",
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "Next": "Fail"
+                }
+              ]
+            },
+            "wait cluster job": {
+              "Type": "Wait",
+              "Next": "cluster_tranform_job",
+              "Seconds": 300
+            },
+            "cluster_tranform_job": {
+              "Type": "Task",
+              "Parameters": {
+                "TransformJobName.$": "$.TransformJobName"
+              },
+              "Resource": "arn:aws:states:::aws-sdk:sagemaker:describeTransformJob",
+              "Next": "cluster Job Complete?",
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "BackoffRate": 2,
+                  "IntervalSeconds": 1,
+                  "MaxAttempts": 2
+                }
+              ]
+            },
+            "cluster Job Complete?": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.TransformJobStatus",
+                  "StringEquals": "Failed",
+                  "Next": "Fail"
+                },
+                {
+                  "Variable": "$.TransformJobStatus",
+                  "StringEquals": "Completed",
+                  "Next": "process_cluster"
+                },
+                {
+                  "Variable": "$.TransformJobStatus",
+                  "StringEquals": "Stopped",
+                  "Next": "Fail"
+                }
+              ],
+              "Default": "wait cluster job"
+            },
+            "process_cluster": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "OutputPath": "$.Payload",
+              "Parameters": {
+                "FunctionName": "${processCluster.Arn}",
+                "Payload": {
+                  "inputPath.$": "$.TransformInput.DataSource.S3DataSource.S3Uri",
+                  "outputPath.$": "$.TransformOutput.S3OutputPath"
+                }
+              },
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                    "Lambda.TooManyRequestsException"
+                  ],
+                  "IntervalSeconds": 1,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2
+                }
+              ],
+              "Next": "cluster_or_flow",
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "Next": "Fail"
+                }
+              ]
+            },
+            "cluster_or_flow": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.TransformJobName",
+                  "StringMatches": "*job-cluster*",
+                  "Next": "wait cluster job"
+                },
+                {
+                  "Variable": "$.TransformJobName",
+                  "StringMatches": "*job-flow*",
+                  "Next": "create_flow"
+                }
+              ],
+              "Default": "Fail"
+            },
+            "create_flow": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "OutputPath": "$.Payload",
+              "Parameters": {
+                "Payload.$": "$",
+                "FunctionName": "${createFlow.Arn}"
+              },
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                    "Lambda.TooManyRequestsException"
+                  ],
+                  "IntervalSeconds": 1,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2
+                }
+              ],
+              "Next": "Wait flow job",
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "Next": "Fail"
+                }
+              ]
+            },
+            "Wait flow job": {
+              "Type": "Wait",
+              "Next": "flow_tranform_job",
+              "Seconds": 300
+            },
+            "flow_tranform_job": {
+              "Type": "Task",
+              "Parameters": {
+                "TransformJobName.$": "$.TransformJobName"
+              },
+              "Resource": "arn:aws:states:::aws-sdk:sagemaker:describeTransformJob",
+              "Next": "flow Job Complete",
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "BackoffRate": 2,
+                  "IntervalSeconds": 1,
+                  "MaxAttempts": 2
+                }
+              ]
+            },
+            "flow Job Complete": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.TransformJobStatus",
+                  "StringEquals": "Failed",
+                  "Next": "Fail"
+                },
+                {
+                  "Variable": "$.TransformJobStatus",
+                  "StringEquals": "Completed",
+                  "Next": "process_flow"
+                },
+                {
+                  "Variable": "$.TransformJobStatus",
+                  "StringEquals": "Stopped",
+                  "Next": "Fail"
+                }
+              ],
+              "Default": "Wait flow job"
+            },
+            "process_flow": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "OutputPath": "$.Payload",
+              "Parameters": {
+                "FunctionName": "${processFlow.Arn}",
+                "Payload": {
+                  "inputPath.$": "$.TransformInput.DataSource.S3DataSource.S3Uri",
+                  "outputPath.$": "$.TransformOutput.S3OutputPath"
+                }
+              },
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                    "Lambda.TooManyRequestsException"
+                  ],
+                  "IntervalSeconds": 1,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2
+                }
+              ],
+              "Next": "create_campaign",
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "Next": "Fail"
+                }
+              ]
+            },
+            "create_campaign": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "OutputPath": "$.Payload",
+              "Parameters": {
+                "Payload.$": "$",
+                "FunctionName": "${createCampaign.Arn}"
+              },
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "Lambda.ServiceException",
+                    "Lambda.AWSLambdaException",
+                    "Lambda.SdkClientException",
+                    "Lambda.TooManyRequestsException"
+                  ],
+                  "IntervalSeconds": 1,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2
+                }
+              ],
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "Next": "Fail"
+                }
+              ],
+              "Next": "Success"
+            },
+            "Success": {
+              "Type": "Succeed"
+            },
+            "Fail": {
+              "Type": "Fail"
+            }
+          }
+        }
+
+  StepFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/vendedlogs/states/${StepFunctionName}
+
   ExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -9603,6 +10591,8 @@ Resources:
               HostPort: 8000
               Protocol: tcp
           Essential: false
+          Command:
+            - "./entry.sh"
           Environment:
             - Name: POSTGRES_USER
               Value: bastet
@@ -9634,6 +10624,54 @@ Resources:
               ReadOnly: false
             - SourceVolume: media_volume
               ContainerPath: /code/media
+              ReadOnly: false
+            - SourceVolume: shared_temp
+              ContainerPath: /tmp/shared
+              ReadOnly: false
+          DependsOn:
+            - ContainerName: bastet_db
+              Condition: START
+            - ContainerName: bastet_redis
+              Condition: START
+            - ContainerName: bastet_rabbitmq
+              Condition: START
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub /ecs/${ECSClusterName}
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: "ecs"
+        - Name: bastet_celery
+          Image: !Ref WebContainerImage
+          Cpu: 0
+          Essential: false
+          Command:
+            - "celery"
+            - "-A"
+            - "bastet"
+            - "worker"
+            - "-l"
+            - "info"
+          Environment:
+            - Name: POSTGRES_USER
+              Value: bastet
+            - Name: DJANGO_SETTINGS_MODULE
+              Value: bastet.settings.local
+            - Name: REDIS_HOST
+              Value: localhost
+            - Name: POSTGRES_HOST
+              Value: localhost
+            - Name: POSTGRES_PASSWORD
+              Value: bastet
+            - Name: POSTGRES_PORT
+              Value: "5432"
+            - Name: RABBITMQ_HOST
+              Value: localhost
+            - Name: POSTGRES_DB_NAME
+              Value: bastet
+          MountPoints:
+            - SourceVolume: shared_temp
+              ContainerPath: /tmp/shared
               ReadOnly: false
           DependsOn:
             - ContainerName: bastet_db
@@ -9683,6 +10721,10 @@ Resources:
             Scope: task
             Driver: local
         - Name: media_volume
+          DockerVolumeConfiguration:
+            Scope: task
+            Driver: local
+        - Name: shared_temp
           DockerVolumeConfiguration:
             Scope: task
             Driver: local
@@ -9856,6 +10898,9 @@ Resources:
 
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
+    DependsOn:
+      - VPC
+      - InternetGateway
     Properties:
       VpcId: !Ref VPC
       InternetGatewayId: !Ref InternetGateway
