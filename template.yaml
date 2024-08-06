@@ -1,109 +1,109 @@
 Transform: AWS::Serverless-2016-10-31
 Metadata:
-  "AWS::CloudFormation::Interface":
+  AWS::CloudFormation::Interface:
     ParameterGroups:
-      - Label:
-          default: "General S3 Parameters"
-        Parameters:
-          - BucketName
-      - Label:
-          default: "SageMaker Model ARN"
-        Parameters:
-          - TechniqueModelARN
-          - ClusterModelARN
-          - FlowModelARN
+    - Label:
+        default: General S3 Parameters
+      Parameters:
+      - BucketName
+    - Label:
+        default: SageMaker Model ARN
+      Parameters:
+      - TechniqueModelARN
+      - ClusterModelARN
+      - FlowModelARN
 
-      - Label:
-          default: Container images
-        Parameters:
-          - VRLLambdaImage
-          - NginxContainerImage
-          - WebContainerImage
-      - Label:
-          default: UI admin credentials
-        Parameters:
-          - SuperuserEmail
-          - SuperuserUsername
-          - SuperuserPassword
-      - Label:
-          default: "Load Balancer Configuration"
-        Parameters:
-          - LoadBalancerName
+    - Label:
+        default: Container images
+      Parameters:
+      - VRLLambdaImage
+      - NginxContainerImage
+      - WebContainerImage
+    - Label:
+        default: UI admin credentials
+      Parameters:
+      - SuperuserEmail
+      - SuperuserUsername
+      - SuperuserPassword
+    - Label:
+        default: Load Balancer Configuration
+      Parameters:
+      - LoadBalancerName
 
-      - Label:
-          default: "SageMaker Model Parameters"
-        Parameters:
-          - TechniqueModelName
-          - ClusterModelName
-          - FlowModelName
-      - Label:
-          default: "Input processing Parameters"
-        Parameters:
-          - TechniqueLookupObject
-          - ChunkSize
-          - FlowInputMaxClusters
-      - Label:
-          default: "Technique detector Batch Job Parameters"
-        Parameters:
-          - EnrichTechBatchInstanceType
-      - Label:
-          default: "Temporal clustering Batch Job Parameters"
-        Parameters:
-          - ClusterBatchInstanceType
-      - Label:
-          default: "Flow detector Batch Job Parameters"
-        Parameters:
-          - FlowBatchInstanceType
-      - Label:
-          default: "UI lambda function Parameters"
-        Parameters:
-          - ClusterOrFlowMapToCampaign
-          - EventThreshold
-          - TacticThreshold
-      - Label:
-          default: "Lambda Function Parameters"
-        Parameters:
-          - StepFunctionName
-          - SplunkInputFunctionName
-          - VRLLambdaFunctionName
-          - SkipInputFunctionName
-          - EnrichTechFunctionName
-          - ProcessTechFunctionName
-          - CreateClusterFunctionName
-          - ProcessClusterFunctionName
-          - CreateFlowFunctionName
-          - ProcessFlowFunctionName
-          - UpdateLookupFunctionName
-          - CreateCampaignFunctionName
-          - SaveFeedbackFunctionName
+    - Label:
+        default: SageMaker Model Parameters
+      Parameters:
+      - TechniqueModelName
+      - ClusterModelName
+      - FlowModelName
+    - Label:
+        default: Input processing Parameters
+      Parameters:
+      - TechniqueLookupObject
+      - ChunkSize
+      - FlowInputMaxClusters
+    - Label:
+        default: Technique detector Batch Job Parameters
+      Parameters:
+      - EnrichTechBatchInstanceType
+    - Label:
+        default: Temporal clustering Batch Job Parameters
+      Parameters:
+      - ClusterBatchInstanceType
+    - Label:
+        default: Flow detector Batch Job Parameters
+      Parameters:
+      - FlowBatchInstanceType
+    - Label:
+        default: UI lambda function Parameters
+      Parameters:
+      - ClusterOrFlowMapToCampaign
+      - EventThreshold
+      - TacticThreshold
+    - Label:
+        default: Lambda Function Parameters
+      Parameters:
+      - StepFunctionName
+      - SplunkInputFunctionName
+      - VRLLambdaFunctionName
+      - SkipInputFunctionName
+      - EnrichTechFunctionName
+      - ProcessTechFunctionName
+      - CreateClusterFunctionName
+      - ProcessClusterFunctionName
+      - CreateFlowFunctionName
+      - ProcessFlowFunctionName
+      - UpdateLookupFunctionName
+      - CreateCampaignFunctionName
+      - SaveFeedbackFunctionName
 
-      - Label:
-          default: "ECS Configuration"
-        Parameters:
-          - ECSClusterName
-          - ServiceAndTaskDefinitionName
-          - Cpu
-          - Memory
-          - LatestECSOptimizedAMI
-      - Label:
-          default: "Auto Scaling Configuration"
-        Parameters:
-          - ClusterAutoScalingMinSize
-          - ClusterAutoScalingMaxSize
-      - Label:
-          default: "VPC Configuration"
-        Parameters:
-          - VPCNamePrefix
-          - VpcCidr
-          - Subnet1Cidr
-          - Subnet2Cidr
+    - Label:
+        default: ECS Configuration
+      Parameters:
+      - ECSClusterName
+      - ServiceAndTaskDefinitionName
+      - Cpu
+      - Memory
+      - LatestECSOptimizedAMI
+    - Label:
+        default: Auto Scaling Configuration
+      Parameters:
+      - ClusterAutoScalingMinSize
+      - ClusterAutoScalingMaxSize
+    - Label:
+        default: VPC Configuration
+      Parameters:
+      - VPCNamePrefix
+      - VpcCidr
+      - Subnet1Cidr
+      - Subnet2Cidr
 
 Parameters:
   BucketName:
     Type: String
     Description: Name of the S3 bucket to create.
     MinLength: 1
-  
+
   TechniqueModelName:
     Type: String
     Description: Name of Sagemaker model for technique classification
@@ -115,7 +115,7 @@ Parameters:
     MinLength: 1
     AllowedPattern: ^arn:aws(-[a-z]+)*:[a-zA-Z0-9\-]+:[a-z0-9\-]*:[0-9]{12}:(.+)$
     ConstraintDescription: Enter a valid AWS ARN for technique model
-  
+
   ClusterModelName:
     Type: String
     Description: Name of Sagemaker model for cluster detection
@@ -127,7 +127,7 @@ Parameters:
     MinLength: 1
     AllowedPattern: ^arn:aws(-[a-z]+)*:[a-zA-Z0-9\-]+:[a-z0-9\-]*:[0-9]{12}:(.+)$
     ConstraintDescription: Enter a valid AWS ARN for technique model
-  
+
   FlowModelName:
     Type: String
     Description: Name of Sagemaker model for flow detection
@@ -143,17 +143,21 @@ Parameters:
   VRLLambdaImage:
     Description: VRL Lambda ECR container image URI
     Type: String
-    AllowedPattern: "^[0-9]{12}.dkr.ecr.[a-z]{2}-[a-z]+-[0-9].amazonaws.com/[a-z0-9-]+:[a-zA-Z0-9.-]+$"
+    AllowedPattern: 
+      ^[0-9]{12}.dkr.ecr.[a-z]{2}-[a-z]+-[0-9].amazonaws.com/[a-z0-9-]+:[a-zA-Z0-9.-]+$
 
   TechniqueLookupObject:
     Type: String
-    Description: Path to S3 object where you want to save lookup table for previously classified techniques for alerts. The object file must have an extension of '.csv'
-    Default: "scratch/lambda/data.csv"
+    Description: Path to S3 object where you want to save lookup table for previously
+      classified techniques for alerts. The object file must have an extension of
+      '.csv'
+    Default: scratch/lambda/data.csv
     MinLength: 5
-  
+
   ChunkSize:
     Type: Number
-    Description: Size of single chunk of input to be processed at a time for an input file
+    Description: Size of single chunk of input to be processed at a time for an input
+      file
     Default: 20000
 
   EnrichTechBatchInstanceType:
@@ -161,50 +165,51 @@ Parameters:
     Default: ml.p2.xlarge
     Description: EC2 instance type for the enrich technology batch transform job.
     AllowedValues:
-      - ml.p2.xlarge
-      - ml.p2.8xlarge
-      - ml.p2.16xlarge
-      - ml.p3.2xlarge
-      - ml.p3.8xlarge
-      - ml.p3.16xlarge
+    - ml.p2.xlarge
+    - ml.p2.8xlarge
+    - ml.p2.16xlarge
+    - ml.p3.2xlarge
+    - ml.p3.8xlarge
+    - ml.p3.16xlarge
 
   ClusterBatchInstanceType:
     Type: String
     Default: ml.p3.2xlarge
     Description: EC2 instance type for the cluster batch transform job.
     AllowedValues:
-      - ml.p3.2xlarge
-      - ml.p3.8xlarge
-      - ml.p3.16xlarge
+    - ml.p3.2xlarge
+    - ml.p3.8xlarge
+    - ml.p3.16xlarge
 
   FlowBatchInstanceType:
     Type: String
     Default: ml.c5.4xlarge
     Description: EC2 instance type for the flow batch transform job.
     AllowedValues:
-      - ml.m5.xlarge
-      - ml.m5.2xlarge
-      - ml.m5.4xlarge
-      - ml.m5.12xlarge
-      - ml.m5.24xlarge
-      - ml.m4.xlarge
-      - ml.m4.2xlarge
-      - ml.m4.4xlarge
-      - ml.m4.10xlarge
-      - ml.c5.xlarge
-      - ml.c5.2xlarge
-      - ml.c5.4xlarge
-      - ml.c5.9xlarge
-      - ml.c5.18xlarge
-      - ml.c4.xlarge
-      - ml.c4.2xlarge
-      - ml.c4.4xlarge
-      - ml.c4.8xlarge
-      - ml.m4.16xlarge
+    - ml.m5.xlarge
+    - ml.m5.2xlarge
+    - ml.m5.4xlarge
+    - ml.m5.12xlarge
+    - ml.m5.24xlarge
+    - ml.m4.xlarge
+    - ml.m4.2xlarge
+    - ml.m4.4xlarge
+    - ml.m4.10xlarge
+    - ml.c5.xlarge
+    - ml.c5.2xlarge
+    - ml.c5.4xlarge
+    - ml.c5.9xlarge
+    - ml.c5.18xlarge
+    - ml.c4.xlarge
+    - ml.c4.2xlarge
+    - ml.c4.4xlarge
+    - ml.c4.8xlarge
+    - ml.m4.16xlarge
 
   FlowInputMaxClusters:
     Type: Number
-    Description: Number of clusters as input to Flow detection model to be processed at a time for an input file
+    Description: Number of clusters as input to Flow detection model to be processed
+      at a time for an input file
     Default: 5000
 
   StepFunctionName:
@@ -272,13 +277,13 @@ Parameters:
     Default: update_lookup_table
     Description: Function name for updating the lookup table.
     MinLength: 5
-  
+
   CreateCampaignFunctionName:
     Type: String
     Default: create_campaign
     Description: Function name for creating campaigns on UI.
     MinLength: 5
-  
+
   SaveFeedbackFunctionName:
     Type: String
     Default: save_feedback
@@ -289,24 +294,27 @@ Parameters:
     Type: String
     Default: cluster
     AllowedValues:
-      - cluster
-      - flow
+    - cluster
+    - flow
 
   EventThreshold:
     Type: Number
     Default: 2
-    Description: Number of events present in the cluster or flow to create campaign on UI. Minimum allowed value '1'.
+    Description: Number of events present in the cluster or flow to create campaign
+      on UI. Minimum allowed value '1'.
     MinValue: 1
 
   TacticThreshold:
     Type: Number
     Default: 0
-    Description: Number of tactics present in an event to be part of the campaign. Minimum allowed value '0'.
+    Description: Number of tactics present in an event to be part of the campaign.
+      Minimum allowed value '0'.
     MinValue: 0
 
   ECSClusterName:
     Type: String
-    Description: Specifies the ECS Cluster Name with which the resources would be associated
+    Description: Specifies the ECS Cluster Name with which the resources would be
+      associated
     Default: cypienta-cluster
     MinLength: 3
     ConstraintDescription: Must be minimum length of 3
@@ -315,51 +323,51 @@ Parameters:
     Type: String
     Description: ECS Cluster instance type for EC2
     Default: t3a.large
-    AllowedValues: 
-      - t2.micro
-      - t2.small
-      - t2.medium
-      - t2.large
-      - t3.micro
-      - t3.small
-      - t3.medium
-      - t3.large
-      - t3a.micro
-      - t3a.small
-      - t3a.medium
-      - t3a.large
-      - m5.large
-      - m5.xlarge
-      - m5.2xlarge
-      - m5.4xlarge
-      - m5a.large
-      - m5a.xlarge
-      - m5a.2xlarge
-      - m5a.4xlarge
-      - m6g.medium
-      - m6g.large
-      - m6g.xlarge
-      - m6g.2xlarge
+    AllowedValues:
+    - t2.micro
+    - t2.small
+    - t2.medium
+    - t2.large
+    - t3.micro
+    - t3.small
+    - t3.medium
+    - t3.large
+    - t3a.micro
+    - t3a.small
+    - t3a.medium
+    - t3a.large
+    - m5.large
+    - m5.xlarge
+    - m5.2xlarge
+    - m5.4xlarge
+    - m5a.large
+    - m5a.xlarge
+    - m5a.2xlarge
+    - m5a.4xlarge
+    - m6g.medium
+    - m6g.large
+    - m6g.xlarge
+    - m6g.2xlarge
 
-  ServiceAndTaskDefinitionName: 
+  ServiceAndTaskDefinitionName:
     Description: Name of the ECS task definition and ECS Service
     Type: String
     Default: cypienta-ui
     MinLength: 3
     ConstraintDescription: Must be minimum length of 3
-    
+
   Cpu:
     Description: Number of CPU units used by the task. 1 vCPU = 1024
     Type: String
     Default: 1024
     AllowedValues:
-      - 256
-      - 512
-      - 1024
-      - 2048
-      - 4096
-      - 8192
-      - 16384
+    - 256
+    - 512
+    - 1024
+    - 2048
+    - 4096
+    - 8192
+    - 16384
 
   Memory:
     Description: Amount of memory (in MiB) used by the task. 1 GB = 1024
@@ -368,38 +376,39 @@ Parameters:
     AllowedPattern: ^[0-9]+$
     ConstraintDescription: Must be an integer value
 
-  SuperuserEmail: 
+  SuperuserEmail:
     Description: Email of superuser
     Type: String
     Default: admin@admin.com
-    AllowedPattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$"
+    AllowedPattern: ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$
     ConstraintDescription: Must be a valid email address
 
-  SuperuserUsername: 
+  SuperuserUsername:
     Description: Superuser username. Minimum length of 3.
     Type: String
     Default: maestro
     MinLength: 3
     ConstraintDescription: Must be minimum length of 3
 
-  SuperuserPassword: 
+  SuperuserPassword:
     Description: Superuser password. Minimum length of 8
     Type: String
     Default: changemenow
     MinLength: 8
     ConstraintDescription: Must be minimum length of 8
-  
-  NginxContainerImage: 
+
+  NginxContainerImage:
     Description: Nginx container image with tag nginx-market*
     Type: String
-    Default: "709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/cytech:nginx-marketv0.0.3"
-    AllowedPattern: "^[0-9]{12}.dkr.ecr.[a-z]{2}-[a-z]+-[0-9].amazonaws.com/[a-z0-9-]+/[a-z0-9-]+:[a-zA-Z0-9.-]+$"
-  
-  WebContainerImage: 
+    Default: 709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/cytech:nginx-marketv0.0.3
+    AllowedPattern: 
+      ^[0-9]{12}.dkr.ecr.[a-z]{2}-[a-z]+-[0-9].amazonaws.com/[a-z0-9-]+/[a-z0-9-]+:[a-zA-Z0-9.-]+$
+  WebContainerImage:
     Description: Container image for web app with tag market*
     Type: String
-    Default: "709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/cytech:marketv0.2.2"
-    AllowedPattern: "^[0-9]{12}.dkr.ecr.[a-z]{2}-[a-z]+-[0-9].amazonaws.com/[a-z0-9-]+/[a-z0-9-]+:[a-zA-Z0-9.-]+$"
+    Default: 709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/cytech:marketv0.2.3
+    AllowedPattern: 
+      ^[0-9]{12}.dkr.ecr.[a-z]{2}-[a-z]+-[0-9].amazonaws.com/[a-z0-9-]+/[a-z0-9-]+:[a-zA-Z0-9.-]+$
 
   VPCNamePrefix:
     Description: Prefix for naming VPC and corresponding resources
@@ -442,7 +451,7 @@ Parameters:
     Default: 0
     AllowedPattern: ^[0-9]+$
     ConstraintDescription: Must be an integer value
-  
+
   ClusterAutoScalingMaxSize:
     Description: The maximum size of the auto scaling group for the ECS cluster
     Type: String
@@ -458,7 +467,7 @@ Parameters:
 Mappings:
   RegionMap:
     af-south-1:
-      lambdaLayer: 'arn:aws:lambda:af-south-1:336392948345:layer:AWSSDKPandas-Python311:12'
+      lambdaLayer: arn:aws:lambda:af-south-1:336392948345:layer:AWSSDKPandas-Python311:12
     ap-northeast-1:
       lambdaLayer: >-
         arn:aws:lambda:ap-northeast-1:336392948345:layer:AWSSDKPandas-Python311:12
@@ -469,7 +478,7 @@ Mappings:
       lambdaLayer: >-
         arn:aws:lambda:ap-northeast-3:336392948345:layer:AWSSDKPandas-Python311:12
     ap-south-1:
-      lambdaLayer: 'arn:aws:lambda:ap-south-1:336392948345:layer:AWSSDKPandas-Python311:12'
+      lambdaLayer: arn:aws:lambda:ap-south-1:336392948345:layer:AWSSDKPandas-Python311:12
     ap-southeast-1:
       lambdaLayer: >-
         arn:aws:lambda:ap-southeast-1:336392948345:layer:AWSSDKPandas-Python311:12
@@ -477,31 +486,31 @@ Mappings:
       lambdaLayer: >-
         arn:aws:lambda:ap-southeast-2:336392948345:layer:AWSSDKPandas-Python311:12
     ca-central-1:
-      lambdaLayer: 'arn:aws:lambda:ca-central-1:336392948345:layer:AWSSDKPandas-Python311:12'
+      lambdaLayer: arn:aws:lambda:ca-central-1:336392948345:layer:AWSSDKPandas-Python311:12
     eu-central-1:
-      lambdaLayer: 'arn:aws:lambda:eu-central-1:336392948345:layer:AWSSDKPandas-Python311:12'
+      lambdaLayer: arn:aws:lambda:eu-central-1:336392948345:layer:AWSSDKPandas-Python311:12
     eu-north-1:
-      lambdaLayer: 'arn:aws:lambda:eu-north-1:336392948345:layer:AWSSDKPandas-Python311:12'
+      lambdaLayer: arn:aws:lambda:eu-north-1:336392948345:layer:AWSSDKPandas-Python311:12
     eu-west-1:
-      lambdaLayer: 'arn:aws:lambda:eu-west-1:336392948345:layer:AWSSDKPandas-Python311:12'
+      lambdaLayer: arn:aws:lambda:eu-west-1:336392948345:layer:AWSSDKPandas-Python311:12
     eu-west-2:
-      lambdaLayer: 'arn:aws:lambda:eu-west-2:336392948345:layer:AWSSDKPandas-Python311:12'
+      lambdaLayer: arn:aws:lambda:eu-west-2:336392948345:layer:AWSSDKPandas-Python311:12
     eu-west-3:
-      lambdaLayer: 'arn:aws:lambda:eu-west-3:336392948345:layer:AWSSDKPandas-Python311:12'
+      lambdaLayer: arn:aws:lambda:eu-west-3:336392948345:layer:AWSSDKPandas-Python311:12
     sa-east-1:
-      lambdaLayer: 'arn:aws:lambda:sa-east-1:336392948345:layer:AWSSDKPandas-Python311:12'
+      lambdaLayer: arn:aws:lambda:sa-east-1:336392948345:layer:AWSSDKPandas-Python311:12
     us-east-1:
-      lambdaLayer: 'arn:aws:lambda:us-east-1:336392948345:layer:AWSSDKPandas-Python311:12'
+      lambdaLayer: arn:aws:lambda:us-east-1:336392948345:layer:AWSSDKPandas-Python311:12
     us-east-2:
-      lambdaLayer: 'arn:aws:lambda:us-east-2:336392948345:layer:AWSSDKPandas-Python311:12'
+      lambdaLayer: arn:aws:lambda:us-east-2:336392948345:layer:AWSSDKPandas-Python311:12
     us-west-1:
-      lambdaLayer: 'arn:aws:lambda:us-west-1:336392948345:layer:AWSSDKPandas-Python311:12'
+      lambdaLayer: arn:aws:lambda:us-west-1:336392948345:layer:AWSSDKPandas-Python311:12
     us-west-2:
-      lambdaLayer: 'arn:aws:lambda:us-west-2:336392948345:layer:AWSSDKPandas-Python311:12'
+      lambdaLayer: arn:aws:lambda:us-west-2:336392948345:layer:AWSSDKPandas-Python311:12
     ap-east-1:
-      lambdaLayer: 'arn:aws:lambda:ap-east-1:839552336658:layer:AWSSDKPandas-Python311:14'
+      lambdaLayer: arn:aws:lambda:ap-east-1:839552336658:layer:AWSSDKPandas-Python311:14
     ap-south-2:
-      lambdaLayer: 'arn:aws:lambda:ap-south-2:246107603503:layer:AWSSDKPandas-Python311:13'
+      lambdaLayer: arn:aws:lambda:ap-south-2:246107603503:layer:AWSSDKPandas-Python311:13
     ap-southeast-3:
       lambdaLayer: >-
         arn:aws:lambda:ap-southeast-3:258944054355:layer:AWSSDKPandas-Python311:14
@@ -509,33 +518,33 @@ Mappings:
       lambdaLayer: >-
         arn:aws:lambda:ap-southeast-4:945386623051:layer:AWSSDKPandas-Python311:13
     eu-central-2:
-      lambdaLayer: 'arn:aws:lambda:eu-central-2:956415814219:layer:AWSSDKPandas-Python311:13'
+      lambdaLayer: arn:aws:lambda:eu-central-2:956415814219:layer:AWSSDKPandas-Python311:13
     eu-south-1:
-      lambdaLayer: 'arn:aws:lambda:eu-south-1:774444163449:layer:AWSSDKPandas-Python311:14'
+      lambdaLayer: arn:aws:lambda:eu-south-1:774444163449:layer:AWSSDKPandas-Python311:14
     eu-south-2:
-      lambdaLayer: 'arn:aws:lambda:eu-south-2:982086096842:layer:AWSSDKPandas-Python311:13'
+      lambdaLayer: arn:aws:lambda:eu-south-2:982086096842:layer:AWSSDKPandas-Python311:13
     il-central-1:
-      lambdaLayer: 'arn:aws:lambda:il-central-1:263840725265:layer:AWSSDKPandas-Python311:12'
+      lambdaLayer: arn:aws:lambda:il-central-1:263840725265:layer:AWSSDKPandas-Python311:12
     me-central-1:
-      lambdaLayer: 'arn:aws:lambda:me-central-1:593833071574:layer:AWSSDKPandas-Python311:12'
+      lambdaLayer: arn:aws:lambda:me-central-1:593833071574:layer:AWSSDKPandas-Python311:12
     me-south-1:
-      lambdaLayer: 'arn:aws:lambda:me-south-1:938046470361:layer:AWSSDKPandas-Python311:14'
+      lambdaLayer: arn:aws:lambda:me-south-1:938046470361:layer:AWSSDKPandas-Python311:14
     cn-north-1:
       lambdaLayer: >-
         arn:aws-cn:lambda:cn-north-1:406640652441:layer:AWSSDKPandas-Python311:10
     cn-northwest-1:
       lambdaLayer: >-
         arn:aws-cn:lambda:cn-northwest-1:406640652441:layer:AWSSDKPandas-Python311:10
-  
+
 Resources:
   Bucket:
     Type: AWS::S3::Bucket
     DependsOn:
-      - SagemakerRole
-      - LambdaRole
-      - ExecutionRole
-      - EcsInstanceExecutionRole
-      - EcsInstanceProfile
+    - SagemakerRole
+    - LambdaRole
+    - ExecutionRole
+    - EcsInstanceExecutionRole
+    - EcsInstanceProfile
     Properties:
       BucketName: !Ref BucketName
 
@@ -545,85 +554,85 @@ Resources:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
-          - Effect: Allow
-            Principal:
-              Service: sagemaker.amazonaws.com
-            Action: sts:AssumeRole
+        - Effect: Allow
+          Principal:
+            Service: sagemaker.amazonaws.com
+          Action: sts:AssumeRole
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonSageMakerFullAccess
+      - arn:aws:iam::aws:policy/AmazonSageMakerFullAccess
       Policies:
-        - PolicyName: S3access
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3:GetObject
-                  - s3:PutObject
-                  - s3:DeleteObject
-                  - s3:ListBucket
-                Resource:
-                  - arn:aws:s3:::*
+      - PolicyName: S3access
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - s3:GetObject
+            - s3:PutObject
+            - s3:DeleteObject
+            - s3:ListBucket
+            Resource:
+            - arn:aws:s3:::*
   LambdaRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
-          - Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: sts:AssumeRole
+        - Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
       Policies:
-        - PolicyName: AllowStepFunctionExecution
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - states:StartExecution
-                Resource: arn:aws:states:*
+      - PolicyName: AllowStepFunctionExecution
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - states:StartExecution
+            Resource: arn:aws:states:*
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonSageMakerServiceCatalogProductsLambdaServiceRolePolicy
-        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+      - arn:aws:iam::aws:policy/service-role/AmazonSageMakerServiceCatalogProductsLambdaServiceRolePolicy
+      - arn:aws:iam::aws:policy/AmazonS3FullAccess
   StepFunctionRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
-          - Effect: Allow
-            Principal:
-              Service: states.amazonaws.com
-            Action: sts:AssumeRole
+        - Effect: Allow
+          Principal:
+            Service: states.amazonaws.com
+          Action: sts:AssumeRole
       Policies:
-        - PolicyName: StepFunction
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - logs:CreateLogDelivery
-                  - logs:GetLogDelivery
-                  - logs:UpdateLogDelivery
-                  - logs:DeleteLogDelivery
-                  - logs:ListLogDeliveries
-                  - logs:PutResourcePolicy
-                  - logs:DescribeResourcePolicies
-                  - logs:DescribeLogGroups
-                  - lambda:InvokeFunction
-                  - sagemaker:DescribeTransformJob
-                  - xray:PutTraceSegments
-                  - xray:PutTelemetryRecords
-                  - xray:GetSamplingRules
-                  - xray:GetSamplingTargets
-                Resource: '*'
+      - PolicyName: StepFunction
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogDelivery
+            - logs:GetLogDelivery
+            - logs:UpdateLogDelivery
+            - logs:DeleteLogDelivery
+            - logs:ListLogDeliveries
+            - logs:PutResourcePolicy
+            - logs:DescribeResourcePolicies
+            - logs:DescribeLogGroups
+            - lambda:InvokeFunction
+            - sagemaker:DescribeTransformJob
+            - xray:PutTraceSegments
+            - xray:PutTelemetryRecords
+            - xray:GetSamplingRules
+            - xray:GetSamplingTargets
+            Resource: '*'
 
   TechModel:
     Type: AWS::SageMaker::Model
     Properties:
       Containers:
-        - ModelPackageName: !Ref TechniqueModelARN
+      - ModelPackageName: !Ref TechniqueModelARN
       ExecutionRoleArn: !GetAtt SagemakerRole.Arn
       ModelName: !Ref TechniqueModelName
       EnableNetworkIsolation: true
@@ -631,7 +640,7 @@ Resources:
     Type: AWS::SageMaker::Model
     Properties:
       Containers:
-        - ModelPackageName: !Ref ClusterModelARN
+      - ModelPackageName: !Ref ClusterModelARN
       ExecutionRoleArn: !GetAtt SagemakerRole.Arn
       ModelName: !Ref ClusterModelName
       EnableNetworkIsolation: true
@@ -639,7 +648,7 @@ Resources:
     Type: AWS::SageMaker::Model
     Properties:
       Containers:
-        - ModelPackageName: !Ref FlowModelARN
+      - ModelPackageName: !Ref FlowModelARN
       ExecutionRoleArn: !GetAtt SagemakerRole.Arn
       ModelName: !Ref FlowModelName
       EnableNetworkIsolation: true
@@ -649,8 +658,8 @@ Resources:
     Properties:
       FunctionName: !Ref SkipInputFunctionName
       Description: !Sub
-        - Stack ${AWS::StackName} Function ${ResourceName}
-        - ResourceName: skipInput
+      - Stack ${AWS::StackName} Function ${ResourceName}
+      - ResourceName: skipInput
       InlineCode: |
         '''
         Skip input file if one execution is running else start execution in step function.
@@ -770,7 +779,7 @@ Resources:
 
         def handle_cloud_watch_trigger(event):
             '''
-            Handle s3 input trigger
+            Handle cloud watch input trigger
             Args:
                 event: event from s3 object created trigger
             '''
@@ -988,10 +997,10 @@ Resources:
       Role: !GetAtt LambdaRole.Arn
       Tracing: Active
       Layers:
-        - !FindInMap
-          - RegionMap
-          - !Ref AWS::Region
-          - lambdaLayer
+      - !FindInMap
+        - RegionMap
+        - !Ref AWS::Region
+        - lambdaLayer
       Environment:
         Variables:
           bucket: !Ref BucketName
@@ -1005,15 +1014,15 @@ Resources:
             Filter:
               S3Key:
                 Rules:
-                  - Name: prefix
-                    Value: input/
-                  - Name: suffix
-                    Value: .json
+                - Name: prefix
+                  Value: input/
+                - Name: suffix
+                  Value: .json
         MyLogGroupTrigger:
           Type: CloudWatchLogs
           Properties:
             LogGroupName: !Ref enrichWithTechniqueLogGroup
-            FilterPattern: "update queue lookup"
+            FilterPattern: update queue lookup
   skipInputLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -1030,8 +1039,8 @@ Resources:
     Properties:
       FunctionName: !Ref SplunkInputFunctionName
       Description: !Sub
-        - Stack ${AWS::StackName} Function ${ResourceName}
-        - ResourceName: splunkInput
+      - Stack ${AWS::StackName} Function ${ResourceName}
+      - ResourceName: splunkInput
       InlineCode: |
         '''
         Chunk input from splunk to create input for VRL transform.
@@ -1292,13 +1301,13 @@ Resources:
       Role: !GetAtt LambdaRole.Arn
       Tracing: Active
       Layers:
-        - !FindInMap
-          - RegionMap
-          - !Ref AWS::Region
-          - lambdaLayer
+      - !FindInMap
+        - RegionMap
+        - !Ref AWS::Region
+        - lambdaLayer
       Environment:
         Variables:
-          chunk_size: "5000"
+          chunk_size: '5000'
       Events:
         S3ObjectCreated:
           Type: S3
@@ -1308,10 +1317,10 @@ Resources:
             Filter:
               S3Key:
                 Rules:
-                  - Name: prefix
-                    Value: splunk_input/input/
-                  - Name: suffix
-                    Value: .json
+                - Name: prefix
+                  Value: splunk_input/input/
+                - Name: suffix
+                  Value: .json
         S3ObjectCreatedTransformed:
           Type: S3
           Properties:
@@ -1320,10 +1329,10 @@ Resources:
             Filter:
               S3Key:
                 Rules:
-                  - Name: prefix
-                    Value: splunk_input/scratch/transformed/
-                  - Name: suffix
-                    Value: .json
+                - Name: prefix
+                  Value: splunk_input/scratch/transformed/
+                - Name: suffix
+                  Value: .json
   splunkInputLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
@@ -1338,11 +1347,11 @@ Resources:
 
   vrlLambda:
     Type: AWS::Serverless::Function
-    Properties: 
+    Properties:
       FunctionName: !Ref VRLLambdaFunctionName
       Description: !Sub
-        - Stack ${AWS::StackName} Function ${ResourceName}
-        - ResourceName: vrlLambda
+      - Stack ${AWS::StackName} Function ${ResourceName}
+      - ResourceName: vrlLambda
       ImageUri: !Ref VRLLambdaImage
       PackageType: Image
       MemorySize: 3008
@@ -1354,7 +1363,7 @@ Resources:
       Environment:
         Variables:
           vrl_program_bucket: !Ref BucketName
-          vrl_program_s3_key: "splunk_input/program/program.vrl"
+          vrl_program_s3_key: splunk_input/program/program.vrl
       Events:
         S3ObjectCreated:
           Type: S3
@@ -1364,10 +1373,10 @@ Resources:
             Filter:
               S3Key:
                 Rules:
-                  - Name: prefix
-                    Value: splunk_input/scratch/chunk/
-                  - Name: suffix
-                    Value: .json
+                - Name: prefix
+                  Value: splunk_input/scratch/chunk/
+                - Name: suffix
+                  Value: .json
   vrlLambdaLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
@@ -1385,8 +1394,8 @@ Resources:
     Properties:
       FunctionName: !Ref EnrichTechFunctionName
       Description: !Sub
-        - Stack ${AWS::StackName} Function ${ResourceName}
-        - ResourceName: enrichWithTechnique
+      - Stack ${AWS::StackName} Function ${ResourceName}
+      - ResourceName: enrichWithTechnique
       InlineCode: |
         '''
         Chunk input file, sanititze in required format, encode attributes, encode node_features if present, generate internal id.
@@ -1399,6 +1408,7 @@ Resources:
         import sys
         import subprocess
         import gc
+        import re
         from datetime import datetime, timezone
         from dateutil import parser
 
@@ -1417,28 +1427,35 @@ Resources:
 
         # Install ijson pip library to handle large json input files
         os.makedirs("/tmp/pylib", exist_ok=True)
-        subprocess.call('pip install ijson==3.3.0 -t /tmp/pylib/ --no-cache-dir'.split(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        os.makedirs("/tmp/nltk_download", exist_ok=True)
+        subprocess.call('pip install ijson==3.3.0 nltk==3.8.1 -t /tmp/pylib/ --no-cache-dir'.split(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         sys.path.insert(1, '/tmp/pylib/')
 
         import ijson
+        import nltk
+        from nltk.corpus import words
 
         TECHNIQUE_MODEL_NAME = os.getenv("technique_model_name")
 
         BATCH_TRANSFORM_JOB_INSTANCE_TYPE = os.getenv("batch_transform_job_instance_type")
 
-        BATCH_TRANSFORM_JOB_MAX_RETRIES = int(os.getenv("batch_transform_job_max_retries"))
+        BATCH_TRANSFORM_JOB_MAX_RETRIES = os.getenv("batch_transform_job_max_retries")
 
-        BATCH_TRANSFORM_JOB_TIMEOUT = int(os.getenv("batch_transform_job_timeout"))
+        BATCH_TRANSFORM_JOB_TIMEOUT = os.getenv("batch_transform_job_timeout")
 
-        BATCH_TRANSFORM_JOB_MAX_PAYLOAD = int(os.getenv("batch_transform_job_max_payload"))
+        BATCH_TRANSFORM_JOB_MAX_PAYLOAD = os.getenv("batch_transform_job_max_payload")
 
-        BATCH_TRANSFORM_JOB_CONCURRENT_TRANSFORM = int(os.getenv("batch_transform_job_concurrent_transform"))
+        BATCH_TRANSFORM_JOB_CONCURRENT_TRANSFORM = os.getenv("batch_transform_job_concurrent_transform")
 
         TECHNIQUE_LOOKUP_OBJECT = os.getenv("technique_lookup_object")
 
-        CHUNK_SIZE = int(os.getenv("chunk_size"))
+        CHUNK_SIZE = os.getenv("chunk_size")
 
-        ENCODE_OTHER_ATTRS = os.getenv("encode_other_attrs").lower() == "true"
+        ENCODE_OTHER_ATTRS = os.getenv("encode_other_attrs")
+
+        MAP_CEF_TO_INTERNAL = os.getenv("map_cef_to_internal")
+
+        ENCODE_NODE_FEATURE = os.getenv("encode_node_feature")
 
         missing_variables = []
 
@@ -1463,6 +1480,28 @@ Resources:
 
         if missing_variables:
             raise ValueError(f"Please enter environment variable(s): {missing_variables}")
+
+        BATCH_TRANSFORM_JOB_MAX_RETRIES = int(BATCH_TRANSFORM_JOB_MAX_RETRIES)
+
+        BATCH_TRANSFORM_JOB_TIMEOUT = int(BATCH_TRANSFORM_JOB_TIMEOUT)
+
+        BATCH_TRANSFORM_JOB_MAX_PAYLOAD = int(BATCH_TRANSFORM_JOB_MAX_PAYLOAD)
+
+        BATCH_TRANSFORM_JOB_CONCURRENT_TRANSFORM = int(BATCH_TRANSFORM_JOB_CONCURRENT_TRANSFORM)
+
+        CHUNK_SIZE = int(CHUNK_SIZE)
+
+        ENCODE_OTHER_ATTRS = ENCODE_OTHER_ATTRS.lower() == "true"
+
+        if MAP_CEF_TO_INTERNAL is not None:
+            MAP_CEF_TO_INTERNAL = (MAP_CEF_TO_INTERNAL == "true")
+        else:
+            MAP_CEF_TO_INTERNAL = True
+
+        if ENCODE_NODE_FEATURE is not None:
+            ENCODE_NODE_FEATURE = (ENCODE_NODE_FEATURE == "true")
+        else:
+            ENCODE_NODE_FEATURE = True
 
         S3_CLIENT = boto3.client("s3")
         SAGEMAKER = boto3.client(service_name='sagemaker')
@@ -1511,6 +1550,30 @@ Resources:
 
         ENCODE_TABLE = {}
 
+        nltk.data.path.append("/tmp/nltk_download")
+        nltk.download("punkt", download_dir="/tmp/nltk_download")
+        nltk.download('words', download_dir="/tmp/nltk_download")
+
+        ENGLISH_WORDS = set(words.words())
+
+        BLACK_LIST_KEYS = [
+            '_raw',
+            '_si',
+            'splunk_server',
+            'ComputerName',
+            'source',
+            'tag',
+            'pa',
+            'ssl_issuer',
+            'ssl_subject',
+            'query',
+            'FriendlyName',
+            'service_name',
+            'content{}',
+            'Mandatory_Label',
+            'vendor_definition'
+        ]
+
 
         def lambda_handler(event, context):
             '''
@@ -1527,6 +1590,7 @@ Resources:
             global NODE_FEATURE_EXISTS_IN_REQUEST
             global CLUSTER_CONFIG_EXISTS_IN_REQUEST
             global CONFIG_EXISTS_IN_REQUEST
+            global MAP_CEF_TO_INTERNAL
             func = "lambda_handler"
 
             CLUSTER_CONFIG_EXISTS_IN_REQUEST = False
@@ -1562,6 +1626,8 @@ Resources:
 
                 get_static_cluster_config()
 
+                process_input_file_to_extract_config_and_node_feature()
+
                 try:
                     print(f"{func}: Create chunk for large input file.")
                     chunks_of_large_input_file = create_chunk_for_large_input_file()
@@ -1573,16 +1639,19 @@ Resources:
 
                 print(f"{func}: Number of chunks created for large input file: {len(chunks_of_large_input_file)}")
 
-                cef_to_internal_mappings = get_cef_to_internal_mappings()
+                process_chunks = chunks_of_large_input_file
+                if MAP_CEF_TO_INTERNAL:
+                    cef_to_internal_mappings = get_cef_to_internal_mappings()
 
-                print(f"{func}: Map events to internal structure")
-                process_chunks = insert_event_sql(bucket, chunks_of_large_input_file, cef_to_internal_mappings)
+                    print(f"{func}: Map events to internal structure")
+                    process_chunks = insert_event_sql(bucket, chunks_of_large_input_file, cef_to_internal_mappings)
 
                 print(f"{func}: Chunks to process: {process_chunks}")
 
                 queue_lookup_json = json.load(open(TEMP_QUEUE_LOOKUP_FILE, "r"))
 
                 if not process_chunks:
+                    # need to send update queue log to remove current input from input queue.
                     print(f"{func}: Input file does not have any tranformed events that could be processed. Skip input file.")
                     payload_json = {"prev": queue_lookup_json["prev"]}
                     log_json = {"message": "update queue lookup", "payload": payload_json}
@@ -1612,7 +1681,7 @@ Resources:
 
                 print(f"Unique id(s) generated for the chunk(s): {unique_ids}")
 
-                if NODE_FEATURE_EXISTS_IN_REQUEST:
+                if NODE_FEATURE_EXISTS_IN_REQUEST and ENCODE_NODE_FEATURE:
                     process_node_features()
                     print(f"{func}: Upload node feature lookup file to S3")
                     try:
@@ -2031,6 +2100,46 @@ Resources:
             return process_chunks
 
 
+        def get_3_words(dict_obj):
+            """
+            Extracts keys and values from a dictionary based on having three words and returns a concatenated string of values.
+
+            Parameters:
+            dict_obj (dict): The input dictionary containing key-value pairs to be processed.
+            black_list (list): A list of keys to be ignored during processing.
+            english_words (list): A list of valid English words to be used for counting.
+
+            Returns:
+            str: A concatenated string of values from `dict_obj` that meet the specified conditions.
+            """
+            global BLACK_LIST_KEYS
+            global ENGLISH_WORDS
+
+            keys = []
+            output_str = ""
+            for key in dict_obj.keys():
+                if key in BLACK_LIST_KEYS:
+                    continue
+
+                target_str  = str(dict_obj[key]).lower()
+
+                if len(target_str) < 4:
+                    continue
+
+                # Split the sentence into words
+                words = re.findall(r'(?<=\s)\w+|\w+(?=\s)|^\w+|\w+$', target_str)
+
+                # Count English words
+                english_word_count = sum(1 for word in words if word in ENGLISH_WORDS)
+
+                if english_word_count >= 3:
+                    if output_str:
+                        output_str += ' '
+                    output_str += f'{target_str}'
+                    keys.append([key,dict_obj[key]])
+            return output_str
+
+
         def map_cef_to_internal(event, cef_to_internal_mappings):
             '''
             Map cef fields to internal
@@ -2127,6 +2236,11 @@ Resources:
             # if required fields are empty, skip event:
             if not transformed_event["time"]:
                 return None, cef_mapped_keys_to_event, event_node_feature
+
+            # get name
+
+            if not transformed_event["name"]:
+                transformed_event["name"] = get_3_words(event)
 
             # convert to unix timestamp
             original_time = transformed_event["time"]
@@ -2589,6 +2703,7 @@ Resources:
             global TEMP_INPUT_FILENAME
             global TEMP_CONFIG_INPUT_FILENAME
             global TEMP_NODE_FEATURE_INPUT_FILENAME
+            global TEMP_NODE_FEATURE_ORIGINAL_INPUT_FILENAME
 
             func = "process_input_file_to_extract_config_and_node_feature"
 
@@ -2624,6 +2739,7 @@ Resources:
                     if not isinstance(node_feature, dict):
                         raise ValueError("The 'node_feature' object in input file must be a json object")
                     json.dump(node_feature, open(TEMP_NODE_FEATURE_INPUT_FILENAME, "w"))
+                    json.dump(node_feature, open(TEMP_NODE_FEATURE_ORIGINAL_INPUT_FILENAME, "w"))
 
             del node_feature
             gc.collect()
@@ -2680,7 +2796,8 @@ Resources:
                 CREATE TABLE IF NOT EXISTS event (
                     alert_id TEXT PRIMARY KEY,
                     cluster_id INTEGER,
-                    added_to_ui INTEGER DEFAULT 0,
+                    cluster_added_to_ui INTEGER DEFAULT 0,
+                    flow_added_to_ui INTEGER DEFAULT 0,
                     src TEXT,
                     dst TEXT,
                     time REAL,
@@ -2700,6 +2817,7 @@ Resources:
                 create_flow_output_table = """
                 CREATE TABLE IF NOT EXISTS flow_output (
                     flow_id  INTEGER PRIMARY KEY,
+                    campaign_id INTEGER UNIQUE,
                     cluster_prob TEXT,
                     alert_ids TEXT
                 );
@@ -4659,21 +4777,23 @@ Resources:
       Role: !GetAtt LambdaRole.Arn
       Tracing: Active
       Layers:
-        - !FindInMap
-          - RegionMap
-          - !Ref AWS::Region
-          - lambdaLayer
+      - !FindInMap
+        - RegionMap
+        - !Ref AWS::Region
+        - lambdaLayer
       Environment:
         Variables:
           batch_transform_job_instance_type: !Ref EnrichTechBatchInstanceType
-          batch_transform_job_max_retries: "1"
-          batch_transform_job_timeout: "3600"
-          batch_transform_job_max_payload: "10"
-          batch_transform_job_concurrent_transform: "1"
+          batch_transform_job_max_retries: '1'
+          batch_transform_job_timeout: '3600'
+          batch_transform_job_max_payload: '10'
+          batch_transform_job_concurrent_transform: '1'
           technique_model_name: !Ref TechniqueModelName
           technique_lookup_object: !Ref TechniqueLookupObject
           chunk_size: !Ref ChunkSize
-          encode_other_attrs: "true"
+          encode_other_attrs: 'true'
+          map_cef_to_internal: 'true'
+          encode_node_feature: 'true'
   enrichWithTechniqueLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
@@ -4691,8 +4811,8 @@ Resources:
     Properties:
       FunctionName: !Ref ProcessTechFunctionName
       Description: !Sub
-        - Stack ${AWS::StackName} Function ${ResourceName}
-        - ResourceName: processEnrichedWithTechnique
+      - Stack ${AWS::StackName} Function ${ResourceName}
+      - ResourceName: processEnrichedWithTechnique
       InlineCode: |
         '''
         Process response from technique classification model and enrich alerts with technique. Create input for the Temporal clustering model.
@@ -4878,6 +4998,8 @@ Resources:
                 bucket: Bucket name
                 unique_id: Unique id of the chunk of input
                 path_to_enriched_alerts_with_techniques: S3 path to save enriched alerts
+            Returns:
+                Lambda response with next job to run
             '''
             global TEMP_INPUT_FILENAME
             global TEMP_ALERTS_INPUT_FILENAME
@@ -4902,7 +5024,11 @@ Resources:
             classification_response_list = []
             for response_lines in classification_response_lines:
                 response = json.loads(response_lines)
-                classification_response_dict = {"alerts": response["raw_alert"], "techniques": json.dumps(response["labels"]["techniques"])}
+                if "labels" in response and "techniques" in response["labels"]:
+                    classification_response_dict = {"alerts": response["raw_alert"], "techniques": json.dumps(response["labels"]["techniques"])}
+                else:
+                    classification_response_dict = {"alerts": response["raw_alert"], "techniques": json.dumps([])}
+
                 classification_response_list.append(classification_response_dict)
 
             classification_response_df = pd.DataFrame(classification_response_list, columns=["alerts", "techniques"])
@@ -5215,18 +5341,18 @@ Resources:
       Role: !GetAtt LambdaRole.Arn
       Tracing: Active
       Layers:
-        - !FindInMap
-          - RegionMap
-          - !Ref AWS::Region
-          - lambdaLayer
+      - !FindInMap
+        - RegionMap
+        - !Ref AWS::Region
+        - lambdaLayer
       Environment:
         Variables:
           batch_transform_job_instance_type: !Ref EnrichTechBatchInstanceType
-          batch_transform_job_max_retries: "1"
-          batch_transform_job_timeout: "3600"
+          batch_transform_job_max_retries: '1'
+          batch_transform_job_timeout: '3600'
           technique_model_name: !Ref TechniqueModelName
-          batch_transform_job_max_payload: "10"
-          batch_transform_job_concurrent_transform: "1"
+          batch_transform_job_max_payload: '10'
+          batch_transform_job_concurrent_transform: '1'
   processEnrichedWithTechniqueLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
@@ -5244,8 +5370,8 @@ Resources:
     Properties:
       FunctionName: !Ref CreateClusterFunctionName
       Description: !Sub
-        - Stack ${AWS::StackName} Function ${ResourceName}
-        - ResourceName: createCluster
+      - Stack ${AWS::StackName} Function ${ResourceName}
+      - ResourceName: createCluster
       InlineCode: |
         '''
         Create batch transform job for Temporal Clustering model
@@ -5524,15 +5650,15 @@ Resources:
       Role: !GetAtt LambdaRole.Arn
       Tracing: Active
       Layers:
-        - !FindInMap
-          - RegionMap
-          - !Ref AWS::Region
-          - lambdaLayer
+      - !FindInMap
+        - RegionMap
+        - !Ref AWS::Region
+        - lambdaLayer
       Environment:
         Variables:
           batch_transform_job_instance_type: !Ref ClusterBatchInstanceType
-          batch_transform_job_max_retries: "1"
-          batch_transform_job_timeout: "3600"
+          batch_transform_job_max_retries: '1'
+          batch_transform_job_timeout: '3600'
           cluster_model_name: !Ref ClusterModelName
   createClusterLogGroup:
     Type: AWS::Logs::LogGroup
@@ -5551,8 +5677,8 @@ Resources:
     Properties:
       FunctionName: !Ref ProcessClusterFunctionName
       Description: !Sub
-        - Stack ${AWS::StackName} Function ${ResourceName}
-        - ResourceName: processCluster
+      - Stack ${AWS::StackName} Function ${ResourceName}
+      - ResourceName: processCluster
       InlineCode: |
         '''
         Create input for next batch if in queue. Extract internal aggregated alerts, cluster json. Create input for flow model.
@@ -6068,7 +6194,7 @@ Resources:
             print(f"{func}: Get user alert ids in aggregate alert output")
             internal_id_exploded_agg_df = agg_df.explode("ids")
             internal_id_exploded_agg_df = internal_id_exploded_agg_df.apply(lambda row: get_user_ids(row,
-                                                                                                    internal_id_to_user_id_json),
+                                                                                                     internal_id_to_user_id_json),
                                                                             axis=1)
 
             # get all original alerts
@@ -6125,9 +6251,9 @@ Resources:
             # get internal ids in batch cluster output
             print(f"{func}: Get internal ids in current batch cluster output")
             merge_cluster_output_agg_output = cluster_aggalertids_exploded_cluster_output_df.merge(to_merge_internal_id_exploded_agg_df,
-                                                                                                  left_on="cluster_aggalertids",
-                                                                                                  right_on="aggalert_id",
-                                                                                                  how="left")
+                                                                                                   left_on="cluster_aggalertids",
+                                                                                                   right_on="aggalert_id",
+                                                                                                   how="left")
 
             internal_id_cluster_output = merge_cluster_output_agg_output.groupby("cluster_id")["ids"].apply(list).reset_index()
 
@@ -7046,15 +7172,15 @@ Resources:
       Role: !GetAtt LambdaRole.Arn
       Tracing: Active
       Layers:
-        - !FindInMap
-          - RegionMap
-          - !Ref AWS::Region
-          - lambdaLayer
+      - !FindInMap
+        - RegionMap
+        - !Ref AWS::Region
+        - lambdaLayer
       Environment:
         Variables:
           batch_transform_job_instance_type: !Ref ClusterBatchInstanceType
-          batch_transform_job_max_retries: "1"
-          batch_transform_job_timeout: "3600"
+          batch_transform_job_max_retries: '1'
+          batch_transform_job_timeout: '3600'
           cluster_model_name: !Ref ClusterModelName
           flow_input_window_size: !Ref FlowInputMaxClusters
   processClusterLogGroup:
@@ -7074,8 +7200,8 @@ Resources:
     Properties:
       FunctionName: !Ref CreateFlowFunctionName
       Description: !Sub
-        - Stack ${AWS::StackName} Function ${ResourceName}
-        - ResourceName: createFlow
+      - Stack ${AWS::StackName} Function ${ResourceName}
+      - ResourceName: createFlow
       InlineCode: |
         '''
         Create batch transform job for Flow detection
@@ -7251,15 +7377,15 @@ Resources:
       Role: !GetAtt LambdaRole.Arn
       Tracing: Active
       Layers:
-        - !FindInMap
-          - RegionMap
-          - !Ref AWS::Region
-          - lambdaLayer
+      - !FindInMap
+        - RegionMap
+        - !Ref AWS::Region
+        - lambdaLayer
       Environment:
         Variables:
           batch_transform_job_instance_type: !Ref FlowBatchInstanceType
-          batch_transform_job_max_retries: "1"
-          batch_transform_job_timeout: "3600"
+          batch_transform_job_max_retries: '1'
+          batch_transform_job_timeout: '3600'
           flow_model_name: !Ref FlowModelName
   createFlowLogGroup:
     Type: AWS::Logs::LogGroup
@@ -7278,8 +7404,8 @@ Resources:
     Properties:
       FunctionName: !Ref ProcessFlowFunctionName
       Description: !Sub
-        - Stack ${AWS::StackName} Function ${ResourceName}
-        - ResourceName: processFlow
+      - Stack ${AWS::StackName} Function ${ResourceName}
+      - ResourceName: processFlow
       InlineCode: |
         '''
         Process response from flow detection model. Extract cluster, flow. Create enriched_alerts_input
@@ -7306,6 +7432,8 @@ Resources:
 
         SKIP_SINGLE_ALERT = os.getenv("skip_single_alert")
 
+        MAP_CEF_TO_INTERNAL = os.getenv("map_cef_to_internal")
+
         missing_variables = []
         if FLOW_INPUT_WINDOW_SIZE is None:
             missing_variables.append("flow_input_window_size")
@@ -7320,6 +7448,11 @@ Resources:
             raise ValueError(f"Valid values for 'campaign_map' environemnt variable are 'flow', 'cluster'. Entered value is: '{CAMPAIGN_MAP}'")
         if SKIP_SINGLE_ALERT not in ["true", "false"]:
             raise ValueError(f"Valid values for 'skip_single_alert' environemnt variable are 'true', 'false'. Entered value is: '{SKIP_SINGLE_ALERT}'")
+
+        if MAP_CEF_TO_INTERNAL is not None:
+            MAP_CEF_TO_INTERNAL = (MAP_CEF_TO_INTERNAL == "true")
+        else:
+            MAP_CEF_TO_INTERNAL = True
 
         S3_CLIENT = boto3.client("s3")
 
@@ -7353,6 +7486,7 @@ Resources:
         NODE_FEATURE_LOOKUP_FILE = f"{SCRATCH_DIR}/node_feature_lookup.json"
         TEMP_NODE_FEATURE_LOOKUP_FILE = "/tmp/node_feature_lookup.json"
 
+        TEMP_FLOW_GLOBAL_METRICS_FILENAME = "/tmp/flow_global_metrics.json"
         TEMP_GLOBAL_FEATURE_FILENAME = "/tmp/global_feature.json"
 
 
@@ -7488,14 +7622,7 @@ Resources:
             upload_cluster_and_flow_output(bucket, unique_id)
             print(f"{func}: Saved cluster, flow output")
 
-            if CAMPAIGN_MAP == "cluster":
-                output_filename = f"{SCRATCH_DIR}/output/flow/{unique_id}/cluster_ticket_output.json"
-                source_filename = f"{SCRATCH_DIR}/intermediate/{unique_id}/cluster_ticket_output.json"
-                copy_source = {
-                    'Bucket': bucket,
-                    'Key': source_filename
-                }
-            else:
+            if len(flow_output) > 0:
                 output_filename = f"{SCRATCH_DIR}/output/flow/{unique_id}/flow_ticket_output.json"
                 source_filename = f"{SCRATCH_DIR}/intermediate/{unique_id}/flow_ticket_output.json"
                 copy_source = {
@@ -7503,8 +7630,22 @@ Resources:
                     'Key': source_filename
                 }
 
+                try:
+                    print(f"{func}: Upload flow ticket output file to output for flow in S3")
+                    S3_CLIENT.copy(copy_source, bucket, output_filename)
+                except Exception as e:
+                    print(f"{func}: Failed to save file to S3: {bucket}/{output_filename}")
+                    raise e
+
+            output_filename = f"{SCRATCH_DIR}/output/flow/{unique_id}/cluster_ticket_output.json"
+            source_filename = f"{SCRATCH_DIR}/intermediate/{unique_id}/cluster_ticket_output.json"
+            copy_source = {
+                'Bucket': bucket,
+                'Key': source_filename
+            }
+
             try:
-                print(f"{func}: Upload {CAMPAIGN_MAP} ticket output file to output for flow in S3")
+                print(f"{func}: Upload cluster ticket output file to output for flow in S3")
                 S3_CLIENT.copy(copy_source, bucket, output_filename)
             except Exception as e:
                 print(f"{func}: Failed to save file to S3: {bucket}/{output_filename}")
@@ -7518,7 +7659,7 @@ Resources:
             if len(queue_lookup_json["input_queue"]) > 0:
                 print(f"{func}: Next input file to process: {queue_lookup_json['input_queue'][0]}")
                 try:
-                    print(f"{func}: Upload {CAMPAIGN_MAP} ticket output file to output for flow in S3")
+                    print(f"{func}: Process next input file")
                     next_input_queue_entry = queue_lookup_json["input_queue"][0]
                     next_input_bucket = next_input_queue_entry.split("/")[0]
                     next_input_key = "/".join(next_input_queue_entry.split("/")[1:])
@@ -7653,6 +7794,7 @@ Resources:
             global TEMP_USER_CLUSTER_OUTPUT_FILENAME
             global TEMP_INPUT_CLUSTER_ID_LIST_JSON_FILENAME
             global TEMP_SQLITE_FILENAME
+            global MAP_CEF_TO_INTERNAL
 
             func = "create_input_cluster_output"
 
@@ -7696,7 +7838,8 @@ Resources:
                             if SKIP_SINGLE_ALERT and len(alert_ids_list) <= 1:
                                 continue
 
-                            alert_ids_list = [alert_id[:-40] for alert_id in alert_ids_list]
+                            if MAP_CEF_TO_INTERNAL:
+                                alert_ids_list = [alert_id[:-40] for alert_id in alert_ids_list]
                             splunk_query = ") OR (".join(alert_ids_list)
                             splunk_query = f"({splunk_query})"
 
@@ -7807,6 +7950,7 @@ Resources:
             global TEMP_USER_FLOW_OUTPUT_JSON_FILENAME
             global TEMP_FLOW_TICKET_OUTPUT_FILENAME
             global TEMP_TICKET_ID_LOOKUP_FILE
+            global TEMP_FLOW_GLOBAL_METRICS_FILENAME
 
             func = "update_flow_sql"
 
@@ -7817,6 +7961,16 @@ Resources:
             # create ticket id
             ticket_id_json = json.load(open(TEMP_TICKET_ID_LOOKUP_FILE, "r"))
             ticket_id_start = ticket_id_json["last_ticket_id"]
+
+            print(ticket_id_start)
+
+            metrics_cols = ["tech", "tac", "stage", "event", "entity"]
+            mapped_metric_cols = ["involved_techs", "involved_tacs", "involved_stages", "ids", "involved_entities"]
+
+            global_metric_time_ranges = []
+            event_count = 0
+            metrics_data = {col: [] for col in metrics_cols}
+            global_metrics = {}
 
             insert_flow_output_query = """
             INSERT OR IGNORE INTO flow_output (
@@ -7849,6 +8003,8 @@ Resources:
                                 flow_ticket.pop("cluster_ids")
                                 flow_ticket["ticket_id"] = ticket_id_start
 
+                                print(ticket_id_start)
+
                                 cluster_id_list = ",".join(map(str, flow["cluster_ids"]))
                                 cluster_id_list = f"({cluster_id_list})"
                                 select_event_query = f"""
@@ -7871,18 +8027,36 @@ Resources:
                                 """
                                 cursor.execute(select_event_query)
 
+                                print("select event query executed")
+
                                 clusters = cursor.fetchall()
                                 clusters = [dict(cluster) for cluster in clusters]
 
+                                print("create cluster dataframe")
+
                                 cluster_df = pd.DataFrame(clusters)
+
+                                print("created cluster dataframe")
 
                                 flow_ticket["start_time"] = cluster_df["start_time"].min()
                                 flow_ticket["end_time"] = cluster_df["end_time"].max()
+
+                                start_time = pd.to_datetime(cluster_df["start_time"].min(), unit='s')
+                                end_time = pd.to_datetime(cluster_df["end_time"].max(), unit='s')
+
+                                print("get start and end time")
+
+                                global_metric_time_range = (end_time - start_time).total_seconds()
+                                global_metric_time_ranges.append(global_metric_time_range)
+
+                                print("get time range")
 
                                 flow_ticket["involved_entities"] = []
                                 flow_ticket["involved_techs"] = []
                                 flow_ticket["involved_tacs"] = []
                                 flow_ticket["involved_stages"] = []
+
+                                print("create flow ticket")
 
                                 cluster_df = cluster_df.apply(process_row, axis=1)
                                 for index, row_cluster in cluster_df.iterrows():
@@ -7893,7 +8067,18 @@ Resources:
                                     flow_ticket["involved_stages"] = list(set(flow_ticket["involved_stages"] + row_cluster["involved_stages"]))
                                     flow_ticket["ids"] = list(set(flow_ticket["ids"] + row_cluster["involved_events"]))
 
+                                print("get global metrics from cluster")
                                 flow_ticket["metrics"] = get_global_metrics_from_cluster_sql(cluster_df)
+
+                                for metric_col, mapped_metric_col in zip(metrics_cols, mapped_metric_cols):
+
+                                    if metric_col == "event":
+                                        count = float(len(flow_ticket[mapped_metric_col]))
+                                        event_count += count
+                                        metrics_data[metric_col].append(count)
+                                    else:
+                                        count = float(len(flow_ticket[mapped_metric_col]))
+                                        metrics_data[metric_col].append(count)
 
                                 f.write(json.dumps(flow_ticket) + "\n")
 
@@ -7919,8 +8104,44 @@ Resources:
                 print(f"{func}: Failed to update event table.")
                 raise e
 
+            # Calculate statistics for each metric
+            for metric_col in metrics_cols:
+                if metric_col not in global_metrics:
+                    global_metrics[metric_col] = {}
+
+                if metrics_data[metric_col]:
+                    global_metrics[metric_col]["avg"] = float(pd.Series(metrics_data[metric_col]).mean())
+                    global_metrics[metric_col]["min"] = float(pd.Series(metrics_data[metric_col]).min())
+                    global_metrics[metric_col]["max"] = float(pd.Series(metrics_data[metric_col]).max())
+                    global_metrics[metric_col]["median"] = float(pd.Series(metrics_data[metric_col]).median())
+                    global_metrics[metric_col]["q1"] = float(pd.Series(metrics_data[metric_col]).quantile(0.25))
+                    global_metrics[metric_col]["q3"] = float(pd.Series(metrics_data[metric_col]).quantile(0.75))
+                    if metric_col == "event":
+                        global_metrics[metric_col]["count"] = event_count
+
+            # Calculate statistics for time range
+            if global_metric_time_ranges:
+                global_metrics["time_range"] = {
+                    "avg": float(pd.Series(global_metric_time_ranges).mean()),
+                    "min": float(pd.Series(global_metric_time_ranges).min()),
+                    "max": float(pd.Series(global_metric_time_ranges).max()),
+                    "median": float(pd.Series(global_metric_time_ranges).median()),
+                    "q1": float(pd.Series(global_metric_time_ranges).quantile(0.25)),
+                    "q3": float(pd.Series(global_metric_time_ranges).quantile(0.75)),
+                }
+
+            json.dump(global_metrics, open(TEMP_FLOW_GLOBAL_METRICS_FILENAME, "w"))
+
             print(f"{func}: Save flow output for user")
             json.dump(flow_output_json, open(TEMP_USER_FLOW_OUTPUT_JSON_FILENAME, "w"))
+
+            try:
+                print(f"{func}: Upload global metric output file to S3")
+                flow_global_metrics_filename = f"{SCRATCH_DIR}/intermediate/{unique_id}/flow_global_metrics.json"
+                S3_CLIENT.upload_file(TEMP_FLOW_GLOBAL_METRICS_FILENAME, bucket, flow_global_metrics_filename)
+            except Exception as e:
+                print(f"{func}: Failed to save file to S3: {bucket}/{flow_global_metrics_filename}")
+                raise e
 
             try:
                 print(f"{func}: Upload flow ticket output file to S3")
@@ -8112,10 +8333,9 @@ Resources:
                 print(f"{func}: Failed to upload file to S3: {bucket}/{path_to_cluster_id_list}")
                 raise e
 
-            path_to_node_feature_from_input = f"{SCRATCH_DIR}/intermediate/{unique_id}/node_feature.json"
             try:
-                print(f"{func}: Checking if node feaures file exists on S3 path {bucket}/{path_to_node_feature_from_input}")
-                S3_CLIENT.head_object(Bucket=bucket, Key=path_to_node_feature_from_input)
+                print(f"{func}: Checking if node feautres lookup file exists on S3 path {bucket}/{NODE_FEATURE_LOOKUP_FILE}")
+                S3_CLIENT.head_object(Bucket=bucket, Key=NODE_FEATURE_LOOKUP_FILE)
                 NODE_FEATURE_EXISTS_IN_REQUEST = True
 
             except ClientError as e:
@@ -8218,14 +8438,15 @@ Resources:
       Role: !GetAtt LambdaRole.Arn
       Tracing: Active
       Layers:
-        - !FindInMap
-          - RegionMap
-          - !Ref AWS::Region
-          - lambdaLayer
+      - !FindInMap
+        - RegionMap
+        - !Ref AWS::Region
+        - lambdaLayer
       Environment:
         Variables:
           campaign_map: !Ref ClusterOrFlowMapToCampaign
           flow_input_window_size: !Ref FlowInputMaxClusters
+          map_cef_to_internal: 'true'
   processFlowLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
@@ -8243,8 +8464,8 @@ Resources:
     Properties:
       FunctionName: !Ref UpdateLookupFunctionName
       Description: !Sub
-        - Stack ${AWS::StackName} Function ${ResourceName}
-        - ResourceName: updateLookupTable
+      - Stack ${AWS::StackName} Function ${ResourceName}
+      - ResourceName: updateLookupTable
       InlineCode: |
         '''
         Update technique lookup table
@@ -8421,10 +8642,10 @@ Resources:
       Role: !GetAtt LambdaRole.Arn
       Tracing: Active
       Layers:
-        - !FindInMap
-          - RegionMap
-          - !Ref AWS::Region
-          - lambdaLayer
+      - !FindInMap
+        - RegionMap
+        - !Ref AWS::Region
+        - lambdaLayer
       Environment:
         Variables:
           technique_lookup_object: !Ref TechniqueLookupObject
@@ -8437,10 +8658,10 @@ Resources:
             Filter:
               S3Key:
                 Rules:
-                  - Name: prefix
-                    Value: scratch/queue/
-                  - Name: suffix
-                    Value: .csv
+                - Name: prefix
+                  Value: scratch/queue/
+                - Name: suffix
+                  Value: .csv
   updateLookupTableLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
@@ -8456,12 +8677,12 @@ Resources:
   createCampaign:
     Type: AWS::Serverless::Function
     DependsOn:
-      - LoadBalancer
+    - LoadBalancer
     Properties:
       FunctionName: !Ref CreateCampaignFunctionName
       Description: !Sub
-        - Stack ${AWS::StackName} Function ${ResourceName}
-        - ResourceName: createCampaign
+      - Stack ${AWS::StackName} Function ${ResourceName}
+      - ResourceName: createCampaign
       InlineCode: |
         '''
         This lambda function will create campaigns, events on the UI.
@@ -8479,14 +8700,15 @@ Resources:
         from contextlib import closing
 
         import boto3
+        from botocore.exceptions import ClientError
         import pandas as pd
         import requests
 
         UI_LB_URL = os.getenv("ui_lb_url")
 
-        EVENT_THRESHOLD = int(os.getenv("event_threshold"))
+        EVENT_THRESHOLD = os.getenv("event_threshold")
 
-        TAC_THRESHOLD = int(os.getenv("tac_threshold"))
+        TAC_THRESHOLD = os.getenv("tac_threshold")
 
         UI_USERNAME = os.getenv("ui_username")
 
@@ -8515,6 +8737,10 @@ Resources:
         if CAMPAIGN_MAP not in ["flow", "cluster"]:
             raise ValueError(f"Valid values for 'campaign_map' environemnt variable are 'flow', 'cluster'. Entered value is: '{CAMPAIGN_MAP}'")
 
+        EVENT_THRESHOLD = int(EVENT_THRESHOLD)
+
+        TAC_THRESHOLD = int(TAC_THRESHOLD)
+
         HOST = f"http://{UI_LB_URL}:8000/"
 
         S3_CLIENT = boto3.client("s3")
@@ -8529,8 +8755,12 @@ Resources:
         TEMP_CLUSTER_TICKET_OUTPUT = "/tmp/cluster_ticket_output.json"
         TEMP_FLOW_TICKET_OUTPUT = "/tmp/flow_ticket_output.json"
 
+        FLOW_TICKET_OUTPUT_EXIST = False
+
+        TEMP_FLOW_GLOBAL_METRICS_FILENAME = "/tmp/flow_global_metrics.json"
         TEMP_GLOBAL_METRICS_FILENAME = "/tmp/global_metrics.json"
         TEMP_GLOBAL_FEATURE_FILENAME = "/tmp/global_feature.json"
+
 
         def lambda_handler(event, context):
             '''
@@ -8547,8 +8777,11 @@ Resources:
             global TEMP_GLOBAL_FEATURE_FILENAME
             global PATH_TO_SQLITE
             global TEMP_SQLITE_FILENAME
+            global FLOW_TICKET_OUTPUT_EXIST
 
             func = "lambda_handler"
+
+            FLOW_TICKET_OUTPUT_EXIST = False
 
             # bucket = event['Records'][0]['s3']['bucket']['name']
             # input_file = event['Records'][0]['s3']['object']['key']
@@ -8563,8 +8796,6 @@ Resources:
                 print(f"{func}: input file: {bucket}/{input_file}")
 
                 temp_input_file = TEMP_CLUSTER_TICKET_OUTPUT
-                if CAMPAIGN_MAP == "flow":
-                    temp_input_file = TEMP_FLOW_TICKET_OUTPUT
 
                 try:
                     print(f"{func}: Download the input file")
@@ -8573,37 +8804,11 @@ Resources:
                     print(f"{func}: Failed to download file from S3: {bucket}/{input_file}")
                     raise e
 
-                if CAMPAIGN_MAP == "flow":
-                    try:
-                        print(f"{func}: Download intermediate file")
-                        cluster_ticket_output_file = f"{SCRATCH_DIR}/intermediate/{unique_id}/cluster_ticket_output.json"
-                        S3_CLIENT.download_file(bucket, cluster_ticket_output_file, TEMP_CLUSTER_TICKET_OUTPUT)
-                    except Exception as e:
-                        print(f"{func}: Failed to download file from S3: {bucket}/{cluster_ticket_output_file}")
-                        raise e
-
                 try:
-                    print(f"{func}: Download sqlite file from S3")
-                    S3_CLIENT.download_file(bucket, PATH_TO_SQLITE, TEMP_SQLITE_FILENAME)
+                    print(f"{func}: Download intermediate files from S3 bucket")
+                    download_intermediate_input_files(bucket, unique_id)
                 except Exception as e:
-                    print(f"{func}: Failed to download file: {bucket}/{PATH_TO_SQLITE}")
-                    raise e
-
-                global_metrics_filename = f"{SCRATCH_DIR}/intermediate/{unique_id}/global_metrics.json"
-                try:
-                    print(f"{func}: Download the global metrics file")
-                    S3_CLIENT.download_file(bucket, global_metrics_filename, TEMP_GLOBAL_METRICS_FILENAME)
-                except Exception as e:
-                    print(f"{func}: Failed to download file from S3: {bucket}/{global_metrics_filename}")
-                    raise e
-
-                print(f"{func}: Download global feature file")
-                global_feature_filename = f"{SCRATCH_DIR}/intermediate/{unique_id}/global_feature.json"
-                try:
-                    print(f"{func}: Download the global feature file")
-                    S3_CLIENT.download_file(bucket, global_feature_filename, TEMP_GLOBAL_FEATURE_FILENAME)
-                except Exception as e:
-                    print(f"{func}: Failed to download file from S3: {bucket}/{global_feature_filename}")
+                    print(f"{func}: Failed to download files to process")
                     raise e
 
                 print("Starting campaign creation")
@@ -8634,6 +8839,7 @@ Resources:
             global CAMPAIGN_MAP
             global EVENT_THRESHOLD
             global HOST
+            global FLOW_TICKET_OUTPUT_EXIST
             func = "create_campaign"
 
             retry_limit = 3
@@ -8643,6 +8849,7 @@ Resources:
             for attempt in range(retry_limit):
                 try:
                     ui_cookies, ui_headers, ui_session = get_ui_session()
+                    break
                 except Exception as e:
                     print(f"Attempt {attempt + 1} failed: {e}")
                     if attempt < retry_limit - 1:
@@ -8656,9 +8863,9 @@ Resources:
 
             create_global_features(ui_cookies, ui_headers, ui_session)
 
-            if CAMPAIGN_MAP == "cluster":
-                create_campaign_for_cluster(ui_cookies, ui_headers, ui_session)
-            else:
+            create_campaign_for_cluster(ui_cookies, ui_headers, ui_session)
+
+            if FLOW_TICKET_OUTPUT_EXIST:
                 create_campaign_for_flow(ui_cookies, ui_headers, ui_session)
 
 
@@ -8669,6 +8876,8 @@ Resources:
             global S3_CLIENT
             global SCRATCH_DIR
             global TEMP_GLOBAL_METRICS_FILENAME
+            global TEMP_FLOW_GLOBAL_METRICS_FILENAME
+            global FLOW_TICKET_OUTPUT_EXIST
             func = "create_global_metrics"
 
             global_metrics_json = json.load(open(TEMP_GLOBAL_METRICS_FILENAME))
@@ -8685,6 +8894,22 @@ Resources:
             except Exception as e:
                 print(f"{func}: An unexpected error occurred")
                 raise e
+
+            if FLOW_TICKET_OUTPUT_EXIST:
+                global_metrics_json = json.load(open(TEMP_FLOW_GLOBAL_METRICS_FILENAME))
+                payload = {"metric": global_metrics_json}
+
+                try:
+                    response_from_ui = ui_session.post(f"{HOST}api/v2/flow_globalmetric/", json=payload, cookies=ui_cookies, headers=ui_headers)
+                    print(f"{func}: Got response", response_from_ui)
+                    response_from_ui.raise_for_status()
+                    print(f"{func}: Flow Global metrics added successful")
+                except requests.exceptions.RequestException as req_err:
+                    print("Request error occurred.")
+                    raise req_err
+                except Exception as e:
+                    print(f"{func}: An unexpected error occurred")
+                    raise e
 
 
         def create_global_features(ui_cookies, ui_headers, ui_session):
@@ -8738,7 +8963,7 @@ Resources:
             FROM event e
             INNER JOIN cluster_output co
             ON co.cluster_id = e.cluster_id
-            WHERE e.added_to_ui = 0 AND co.cluster_id = :cluster_id
+            WHERE e.cluster_added_to_ui = 0 AND co.cluster_id = :cluster_id
             GROUP BY co.cluster_id
             ;
             """
@@ -8752,7 +8977,7 @@ Resources:
 
             update_event_added_to_ui = """
             UPDATE event
-            SET added_to_ui = 1
+            SET cluster_added_to_ui = 1
             WHERE cluster_id = :cluster_id
             ;
             """
@@ -8852,48 +9077,141 @@ Resources:
                 ui_session: UI session
             '''
             global TEMP_FLOW_TICKET_OUTPUT
-            global TEMP_CLUSTER_TICKET_OUTPUT
             global CAMPAIGN_MAP
             global EVENT_THRESHOLD
             global HOST
             func = "create_campaign_for_flow"
+
+            update_flow_output_campaign_id = """
+            UPDATE flow_output
+            SET campaign_id = :campaign_id
+            WHERE flow_id = :flow_id
+            ;
+            """
+
             try:
-                flow_ticket_output_df = pd.read_json(TEMP_FLOW_TICKET_OUTPUT, lines=True)
-                cluster_ticket_output_df = pd.read_json(TEMP_CLUSTER_TICKET_OUTPUT, lines=True)
-                
-                if len(flow_ticket_output_df) < 1:
-                    print(f"{func}: There is no {CAMPAIGN_MAP} detected for input. No campaigns to push to UI.")
-                    exit(0)
 
-                for _, row_flow in flow_ticket_output_df.iterrows():
-                    print(f"{func}: Evaluating for {CAMPAIGN_MAP}: {row_flow['flow_id']}")
+                with closing(sqlite3.connect(TEMP_SQLITE_FILENAME)) as conn:
+                    conn.row_factory = sqlite3.Row
+                    conn.execute("PRAGMA foreign_keys = ON;")
+                    with closing(conn.cursor()) as cursor:
+                        with open(TEMP_FLOW_TICKET_OUTPUT, "r") as f:
+                            for line in f:
+                                row_flow = json.loads(line)
 
-                    involved_clusters_df = cluster_ticket_output_df[cluster_ticket_output_df["ticket_id"] == row_flow["cluster_ticket_ids"]]
-                    involved_events = involved_clusters_df['involved_events'].sum()
-                    involved_events_df = pd.DataFrame(involved_events)
+                                print(f"{func}: Evaluating for flow: {row_flow['flow_id']}")
 
-                    involved_events_df['time_df'] = pd.to_datetime(involved_events_df['time'], unit="s")
-                    involved_events_df['time_df'] = involved_events_df['time_df'].dt.strftime('%Y-%m-%d %H:%M:%S')
+                                flow_alert_ids = "','".join(row_flow["ids"])
+                                flow_alert_ids = f"('{flow_alert_ids}')"
 
-                    events = create_events_list_for_ui(involved_events_df)
+                                # filter out involved events that are already added to UI
 
-                    if len(events) < EVENT_THRESHOLD:
-                        print(
-                            f"{func}: Length of list of events is less than threshold set. Skip creation of campaign. length: {len(events)}")
-                        continue
+                                select_flow_output = f"""
+                                SELECT
+                                    fo.flow_id,
+                                    fo.campaign_id,
+                                    e.alert_id,
+                                    e.src,
+                                    e.dst,
+                                    e.time,
+                                    e.name,
+                                    e.tech,
+                                    e.tac,
+                                    e.stage,
+                                    e.other_attributes
+                                FROM flow_output fo, event e
+                                WHERE fo.flow_id = :flow_id
+                                AND e.alert_id IN {flow_alert_ids}
+                                AND e.flow_added_to_ui = 0
+                                ORDER BY e.alert_id
+                                ;
+                                """
+                                param = {"flow_id": row_flow['flow_id']}
+                                cursor.execute(select_flow_output, param)
 
-                    files, payload = create_payload_to_create_campaign_and_events_in_ui(events, row_flow['flow_id'])
+                                result = cursor.fetchone()
+                                if result is None:
+                                    continue
 
-                    print(f"{func}: Sending campaign create request")
+                                row = dict(result)
+                                campaign_id_sql = row["campaign_id"]
 
-                    try:
-                        response_from_ui = ui_session.post(f"{HOST}api/v2/campaign/", data=payload, files=files, cookies=ui_cookies, headers=ui_headers)
-                        print(f"{func}: Got response", response_from_ui)
-                        response_from_ui.raise_for_status()
-                        print(f"{func}: Campaign creation successful")
-                    except Exception as e:
-                        print(f"{func}: Failed to create campaign")
-                        raise e
+                                involved_events = []
+                                while result is not None:
+                                    row = dict(result)
+
+                                    involved_event_dict = {
+                                        "id": row["alert_id"],
+                                        "src": row["src"],
+                                        "dst": row["dst"],
+                                        "time": row["time"],
+                                        "name": row["name"],
+                                        "tech": json.loads(row["tech"]),
+                                        "tac": json.loads(row["tac"]),
+                                        "stage": json.loads(row["stage"]),
+                                        "other_attributes": json.loads(row["other_attributes"]),
+                                    }
+                                    involved_events.append(involved_event_dict)
+
+                                    result = cursor.fetchone()
+
+                                involved_events_df = pd.DataFrame(involved_events)
+
+                                involved_events_df['time_df'] = pd.to_datetime(involved_events_df['time'], unit="s")
+                                involved_events_df['time_df'] = involved_events_df['time_df'].dt.strftime('%Y-%m-%d %H:%M:%S')
+
+                                events = create_events_list_for_ui(involved_events_df)
+
+                                if len(events) < EVENT_THRESHOLD:
+                                    print(
+                                        f"{func}: Length of list of events is less than threshold set. Skip creation of campaign. length: {len(events)}")
+                                    continue
+
+                                files, payload = create_payload_to_create_campaign_and_events_in_ui(events, row_flow['flow_id'])
+
+                                if campaign_id_sql is None:
+                                    print(f"{func}: Create campaign")
+                                    try:
+                                        response_from_ui = ui_session.post(f"{HOST}api/v2/flow/", data=payload, files=files, cookies=ui_cookies, headers=ui_headers)
+
+                                        print(f"{func}: Got response", response_from_ui)
+                                        response_from_ui.raise_for_status()
+
+                                        print(f"{func}: Campaign creation successful")
+                                        response_from_ui = json.loads(response_from_ui.content)
+                                        campaign_id = response_from_ui["id"]
+                                        print("Campaign id: ", campaign_id)
+
+                                        update_cluster_output_campaign_id_param = {
+                                            "flow_id": row_flow['flow_id'],
+                                            "campaign_id": campaign_id
+                                        }
+                                        cursor.execute(update_flow_output_campaign_id, update_cluster_output_campaign_id_param)
+
+                                    except Exception as e:
+                                        print(f"{func}: Failed to create campaign")
+                                        raise e
+                                else:
+                                    print(f"{func}: Update campaign: {campaign_id_sql}")
+                                    try:
+                                        response_from_ui = ui_session.put(f"{HOST}api/v2/flow/{campaign_id_sql}/", data=payload, files=files, cookies=ui_cookies, headers=ui_headers)
+                                        print(f"{func}: Got response", response_from_ui)
+                                        response_from_ui.raise_for_status()
+
+                                    except Exception as e:
+                                        print(f"{func}: Failed to update campaign")
+                                        raise e
+
+                                # update only those events that were added per flow. in case the flow has 1 event its not added. but it could get more events in next batch.
+                                update_event_added_to_ui = f"""
+                                UPDATE event
+                                SET flow_added_to_ui = 1
+                                WHERE alert_id IN {flow_alert_ids}
+                                ;
+                                """
+                                cursor.execute(update_event_added_to_ui)
+
+                        conn.commit()
 
             except requests.exceptions.RequestException as req_err:
                 print("Request error occurred.")
@@ -8969,6 +9287,96 @@ Resources:
             return events
 
 
+        def download_intermediate_input_files(bucket, unique_id):
+            '''
+            Download intermediate files for processing.
+            Args:
+                bucket: Bucket name
+                unique_id: unique id for current batch
+            '''
+            global S3_CLIENT
+            global SCRATCH_DIR
+            global PATH_TO_SQLITE
+            global TEMP_SQLITE_FILENAME
+            global TEMP_GLOBAL_METRICS_FILENAME
+            global TEMP_GLOBAL_FEATURE_FILENAME
+            global TEMP_FLOW_GLOBAL_METRICS_FILENAME
+
+            func = "download_intermediate_input_files"
+
+            fetch_flow_ticket_output_if_present(bucket, unique_id)
+
+            try:
+                print(f"{func}: Download sqlite file from S3")
+                S3_CLIENT.download_file(bucket, PATH_TO_SQLITE, TEMP_SQLITE_FILENAME)
+            except Exception as e:
+                print(f"{func}: Failed to download file: {bucket}/{PATH_TO_SQLITE}")
+                raise e
+
+            global_metrics_filename = f"{SCRATCH_DIR}/intermediate/{unique_id}/global_metrics.json"
+            try:
+                print(f"{func}: Download the global metrics file")
+                S3_CLIENT.download_file(bucket, global_metrics_filename, TEMP_GLOBAL_METRICS_FILENAME)
+            except Exception as e:
+                print(f"{func}: Failed to download file from S3: {bucket}/{global_metrics_filename}")
+                raise e
+
+            if FLOW_TICKET_OUTPUT_EXIST:
+                flow_global_metrics_filename = f"{SCRATCH_DIR}/intermediate/{unique_id}/flow_global_metrics.json"
+                try:
+                    print(f"{func}: Download the flow global metrics file")
+                    S3_CLIENT.download_file(bucket, flow_global_metrics_filename, TEMP_FLOW_GLOBAL_METRICS_FILENAME)
+                except Exception as e:
+                    print(f"{func}: Failed to download file from S3: {bucket}/{flow_global_metrics_filename}")
+                    raise e
+
+            print(f"{func}: Download global feature file")
+            global_feature_filename = f"{SCRATCH_DIR}/intermediate/{unique_id}/global_feature.json"
+            try:
+                print(f"{func}: Download the global feature file")
+                S3_CLIENT.download_file(bucket, global_feature_filename, TEMP_GLOBAL_FEATURE_FILENAME)
+            except Exception as e:
+                print(f"{func}: Failed to download file from S3: {bucket}/{global_feature_filename}")
+                raise e
+
+
+        def fetch_flow_ticket_output_if_present(bucket, unique_id):
+            '''
+            Fetch flow ticket output if present
+            Args:
+                bucket: Bucket name
+            '''
+            global S3_CLIENT
+            global FLOW_TICKET_OUTPUT_EXIST
+            global TEMP_FLOW_TICKET_OUTPUT
+
+            func = "fetch_flow_ticket_output_if_present"
+
+            flow_ticket_output_file = f"{SCRATCH_DIR}/intermediate/{unique_id}/flow_ticket_output.json"
+
+            try:
+                print(
+                    f"{func}: Checking if flow ticket output exists on S3 path {bucket}/{flow_ticket_output_file}")
+
+                S3_CLIENT.head_object(Bucket=bucket, Key=flow_ticket_output_file)
+
+            except ClientError as e:
+                if e.response['Error']['Code'] != '404':
+                    raise e
+                FLOW_TICKET_OUTPUT_EXIST = False
+                print(f"{func}: Flow ticket output does not exist on S3")
+            else:
+                try:
+                    print(f"{func}: Download available flow ticket output from S3")
+
+                    S3_CLIENT.download_file(bucket, flow_ticket_output_file, TEMP_FLOW_TICKET_OUTPUT)
+                    FLOW_TICKET_OUTPUT_EXIST = True
+                    print(f"{func}: Download completed")
+                except Exception as e:
+                    print(f"{func}: Failed to download flow ticket output from S3: {bucket}/{flow_ticket_output_file}")
+                    raise e
+
+
         def get_ui_session():
             '''
             Get UI session and cookies
@@ -9041,16 +9449,16 @@ Resources:
       Role: !GetAtt LambdaRole.Arn
       Tracing: Active
       Layers:
-        - !FindInMap
-          - RegionMap
-          - !Ref AWS::Region
-          - lambdaLayer
+      - !FindInMap
+        - RegionMap
+        - !Ref AWS::Region
+        - lambdaLayer
       Environment:
         Variables:
           campaign_map: !Ref ClusterOrFlowMapToCampaign
           event_threshold: !Ref EventThreshold
           tac_threshold: !Ref TacticThreshold
-          ui_lb_url: !GetAtt LoadBalancer.DNSName 
+          ui_lb_url: !GetAtt LoadBalancer.DNSName
           ui_password: !Ref SuperuserPassword
           ui_username: !Ref SuperuserUsername
   createCampaignLogGroup:
@@ -9068,13 +9476,13 @@ Resources:
   saveFeedback:
     Type: AWS::Serverless::Function
     DependsOn:
-      - LoadBalancer
-      - ECSLogGroup
+    - LoadBalancer
+    - ECSLogGroup
     Properties:
       FunctionName: !Ref SaveFeedbackFunctionName
       Description: !Sub
-        - Stack ${AWS::StackName} Function ${ResourceName}
-        - ResourceName: saveFeedback
+      - Stack ${AWS::StackName} Function ${ResourceName}
+      - ResourceName: saveFeedback
       InlineCode: |
         '''
         Save copy/cut action feedback to S3
@@ -10029,14 +10437,14 @@ Resources:
       Role: !GetAtt LambdaRole.Arn
       Tracing: Active
       Layers:
-        - !FindInMap
-          - RegionMap
-          - !Ref AWS::Region
-          - lambdaLayer
+      - !FindInMap
+        - RegionMap
+        - !Ref AWS::Region
+        - lambdaLayer
       Environment:
         Variables:
           bucket: !Ref BucketName
-          ui_lb_url: !GetAtt LoadBalancer.DNSName 
+          ui_lb_url: !GetAtt LoadBalancer.DNSName
           ui_password: !Ref SuperuserPassword
           ui_username: !Ref SuperuserUsername
       Events:
@@ -10044,7 +10452,7 @@ Resources:
           Type: CloudWatchLogs
           Properties:
             LogGroupName: !Ref ECSLogGroup
-            FilterPattern: "Save campaign json"
+            FilterPattern: Save campaign json
   saveFeedbackLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
@@ -10058,7 +10466,7 @@ Resources:
       Qualifier: $LATEST
 
   stepFunction:
-    Type: 'AWS::StepFunctions::StateMachine'
+    Type: AWS::StepFunctions::StateMachine
     Properties:
       StateMachineName: !Ref StepFunctionName
       RoleArn: !GetAtt StepFunctionRole.Arn
@@ -10066,8 +10474,8 @@ Resources:
         Level: ALL
         IncludeExecutionData: true
         Destinations:
-          - CloudWatchLogsLogGroup:
-              LogGroupArn: !GetAtt StepFunctionLogGroup.Arn
+        - CloudWatchLogsLogGroup:
+            LogGroupArn: !GetAtt StepFunctionLogGroup.Arn
       DefinitionString: !Sub |
         {
           "Comment": "A description of my state machine",
@@ -10106,10 +10514,10 @@ Resources:
             },
             "wait technique job": {
               "Type": "Wait",
-              "Next": "technique_tranform_job",
+              "Next": "technique_transform_job",
               "Seconds": 300
             },
-            "technique_tranform_job": {
+            "technique_transform_job": {
               "Type": "Task",
               "Parameters": {
                 "TransformJobName.$": "$.TransformJobName"
@@ -10165,11 +10573,12 @@ Resources:
                     "Lambda.ServiceException",
                     "Lambda.AWSLambdaException",
                     "Lambda.SdkClientException",
-                    "Lambda.TooManyRequestsException"
+                    "Lambda.TooManyRequestsException",
+                    "States.TaskFailed"
                   ],
-                  "IntervalSeconds": 1,
                   "MaxAttempts": 3,
-                  "BackoffRate": 2
+                  "BackoffRate": 2,
+                  "IntervalSeconds": 5
                 }
               ],
               "Catch": [
@@ -10236,10 +10645,10 @@ Resources:
             },
             "wait cluster job": {
               "Type": "Wait",
-              "Next": "cluster_tranform_job",
+              "Next": "cluster_transform_job",
               "Seconds": 300
             },
-            "cluster_tranform_job": {
+            "cluster_transform_job": {
               "Type": "Task",
               "Parameters": {
                 "TransformJobName.$": "$.TransformJobName"
@@ -10295,9 +10704,10 @@ Resources:
                     "Lambda.ServiceException",
                     "Lambda.AWSLambdaException",
                     "Lambda.SdkClientException",
-                    "Lambda.TooManyRequestsException"
+                    "Lambda.TooManyRequestsException",
+                    "States.TaskFailed"
                   ],
-                  "IntervalSeconds": 1,
+                  "IntervalSeconds": 5,
                   "MaxAttempts": 3,
                   "BackoffRate": 2
                 }
@@ -10361,10 +10771,10 @@ Resources:
             },
             "Wait flow job": {
               "Type": "Wait",
-              "Next": "flow_tranform_job",
+              "Next": "flow_transform_job",
               "Seconds": 300
             },
-            "flow_tranform_job": {
+            "flow_transform_job": {
               "Type": "Task",
               "Parameters": {
                 "TransformJobName.$": "$.TransformJobName"
@@ -10488,13 +10898,13 @@ Resources:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
-          - Effect: Allow
-            Principal:
-              Service: ecs-tasks.amazonaws.com
-            Action: sts:AssumeRole
+        - Effect: Allow
+          Principal:
+            Service: ecs-tasks.amazonaws.com
+          Action: sts:AssumeRole
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
-        - arn:aws:iam::aws:policy/AWSMarketplaceMeteringRegisterUsage
+      - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      - arn:aws:iam::aws:policy/AWSMarketplaceMeteringRegisterUsage
 
   EcsInstanceExecutionRole:
     Type: AWS::IAM::Role
@@ -10502,239 +10912,239 @@ Resources:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
-          - Effect: Allow
-            Principal:
-              Service: ec2.amazonaws.com
-            Action: sts:AssumeRole
+        - Effect: Allow
+          Principal:
+            Service: ec2.amazonaws.com
+          Action: sts:AssumeRole
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
-  
+      - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+
   EcsInstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
       Path: /
       Roles:
-        - !Ref EcsInstanceExecutionRole
+      - !Ref EcsInstanceExecutionRole
 
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     DependsOn:
-      - LoadBalancer
+    - LoadBalancer
     Properties:
       Family: !Ref ServiceAndTaskDefinitionName
       Cpu: !Ref Cpu
       Memory: !Ref Memory
       NetworkMode: host
-      RequiresCompatibilities: 
-        - EC2
+      RequiresCompatibilities:
+      - EC2
       ExecutionRoleArn: !GetAtt ExecutionRole.Arn
       TaskRoleArn: !GetAtt ExecutionRole.Arn
       ContainerDefinitions:
-        - Name: bastet_db
-          Image: postgres:13-bullseye
-          Cpu: 0
-          PortMappings: []
-          Essential: false
-          Environment:
-            - Name: POSTGRES_USER
-              Value: bastet
-            - Name: POSTGRES_PASSWORD
-              Value: bastet
-            - Name: POSTGRES_DB
-              Value: bastet
-          MountPoints:
-            - SourceVolume: postgres_data
-              ContainerPath: /var/lib/postgresql/data/
-              ReadOnly: false
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Sub /ecs/${ECSClusterName}
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: "ecs"
-        - Name: bastet_redis
-          Image: redis:6.2.6-alpine
-          Cpu: 0
-          PortMappings:
-            - Name: bastet_redis-6379-tcp
-              ContainerPort: 6379
-              HostPort: 6379
-              Protocol: tcp
-          Essential: false
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Sub /ecs/${ECSClusterName}
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: "ecs"
-        - Name: bastet_rabbitmq
-          Image: rabbitmq:alpine
-          Cpu: 0
-          PortMappings:
-            - Name: bastet_rabbitmq-5672-tcp
-              ContainerPort: 5672
-              HostPort: 5672
-              Protocol: tcp
-          Essential: false
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Sub /ecs/${ECSClusterName}
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: "ecs"
-        - Name: bastet_web
-          Image: !Ref WebContainerImage
-          Cpu: 0
-          PortMappings:
-            - Name: bastet_web-8000-tcp
-              ContainerPort: 8000
-              HostPort: 8000
-              Protocol: tcp
-          Essential: false
-          Command:
-            - "./entry.sh"
-          Environment:
-            - Name: POSTGRES_USER
-              Value: bastet
-            - Name: DJANGO_SETTINGS_MODULE
-              Value: bastet.settings.local
-            - Name: REDIS_HOST
-              Value: localhost
-            - Name: DJANGO_SUPERUSER_EMAIL
-              Value: !Ref SuperuserEmail
-            - Name: POSTGRES_HOST
-              Value: localhost
-            - Name: DJANGO_SUPERUSER_USERNAME
-              Value: !Ref SuperuserUsername
-            - Name: POSTGRES_PASSWORD
-              Value: bastet
-            - Name: POSTGRES_PORT
-              Value: "5432"
-            - Name: RABBITMQ_HOST
-              Value: localhost
-            - Name: DJANGO_SUPERUSER_PASSWORD
-              Value: !Ref SuperuserPassword
-            - Name: POSTGRES_DB_NAME
-              Value: bastet
-            - Name: AWS_REGION
-              Value: !Ref AWS::Region
-          MountPoints:
-            - SourceVolume: static_volume
-              ContainerPath: /code/static
-              ReadOnly: false
-            - SourceVolume: media_volume
-              ContainerPath: /code/media
-              ReadOnly: false
-            - SourceVolume: shared_temp
-              ContainerPath: /tmp/shared
-              ReadOnly: false
-          DependsOn:
-            - ContainerName: bastet_db
-              Condition: START
-            - ContainerName: bastet_redis
-              Condition: START
-            - ContainerName: bastet_rabbitmq
-              Condition: START
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Sub /ecs/${ECSClusterName}
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: "ecs"
-        - Name: bastet_celery
-          Image: !Ref WebContainerImage
-          Cpu: 0
-          Essential: false
-          Command:
-            - "celery"
-            - "-A"
-            - "bastet"
-            - "worker"
-            - "-l"
-            - "info"
-          Environment:
-            - Name: POSTGRES_USER
-              Value: bastet
-            - Name: DJANGO_SETTINGS_MODULE
-              Value: bastet.settings.local
-            - Name: REDIS_HOST
-              Value: localhost
-            - Name: POSTGRES_HOST
-              Value: localhost
-            - Name: POSTGRES_PASSWORD
-              Value: bastet
-            - Name: POSTGRES_PORT
-              Value: "5432"
-            - Name: RABBITMQ_HOST
-              Value: localhost
-            - Name: POSTGRES_DB_NAME
-              Value: bastet
-          MountPoints:
-            - SourceVolume: shared_temp
-              ContainerPath: /tmp/shared
-              ReadOnly: false
-          DependsOn:
-            - ContainerName: bastet_db
-              Condition: START
-            - ContainerName: bastet_redis
-              Condition: START
-            - ContainerName: bastet_rabbitmq
-              Condition: START
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Sub /ecs/${ECSClusterName}
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: "ecs"
-        - Name: bastet_nginx
-          Image: !Ref NginxContainerImage
-          Cpu: 0
-          PortMappings:
-            - Name: bastet_nginx-80-tcp
-              ContainerPort: 80
-              HostPort: 80
-              Protocol: tcp
-          Essential: true
-          MountPoints:
-            - SourceVolume: static_volume
-              ContainerPath: /home/app/web/staticfiles
-              ReadOnly: false
-            - SourceVolume: media_volume
-              ContainerPath: /home/app/web/mediafiles
-              ReadOnly: false
-          DependsOn:
-            - ContainerName: bastet_web
-              Condition: START
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Sub /ecs/${ECSClusterName}
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: "ecs"
+      - Name: bastet_db
+        Image: postgres:13-bullseye
+        Cpu: 0
+        PortMappings: []
+        Essential: false
+        Environment:
+        - Name: POSTGRES_USER
+          Value: bastet
+        - Name: POSTGRES_PASSWORD
+          Value: bastet
+        - Name: POSTGRES_DB
+          Value: bastet
+        MountPoints:
+        - SourceVolume: postgres_data
+          ContainerPath: /var/lib/postgresql/data/
+          ReadOnly: false
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: !Sub /ecs/${ECSClusterName}
+            awslogs-region: !Ref AWS::Region
+            awslogs-stream-prefix: ecs
+      - Name: bastet_redis
+        Image: redis:6.2.6-alpine
+        Cpu: 0
+        PortMappings:
+        - Name: bastet_redis-6379-tcp
+          ContainerPort: 6379
+          HostPort: 6379
+          Protocol: tcp
+        Essential: false
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: !Sub /ecs/${ECSClusterName}
+            awslogs-region: !Ref AWS::Region
+            awslogs-stream-prefix: ecs
+      - Name: bastet_rabbitmq
+        Image: rabbitmq:alpine
+        Cpu: 0
+        PortMappings:
+        - Name: bastet_rabbitmq-5672-tcp
+          ContainerPort: 5672
+          HostPort: 5672
+          Protocol: tcp
+        Essential: false
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: !Sub /ecs/${ECSClusterName}
+            awslogs-region: !Ref AWS::Region
+            awslogs-stream-prefix: ecs
+      - Name: bastet_web
+        Image: !Ref WebContainerImage
+        Cpu: 0
+        PortMappings:
+        - Name: bastet_web-8000-tcp
+          ContainerPort: 8000
+          HostPort: 8000
+          Protocol: tcp
+        Essential: false
+        Command:
+        - ./entry.sh
+        Environment:
+        - Name: POSTGRES_USER
+          Value: bastet
+        - Name: DJANGO_SETTINGS_MODULE
+          Value: bastet.settings.local
+        - Name: REDIS_HOST
+          Value: localhost
+        - Name: DJANGO_SUPERUSER_EMAIL
+          Value: !Ref SuperuserEmail
+        - Name: POSTGRES_HOST
+          Value: localhost
+        - Name: DJANGO_SUPERUSER_USERNAME
+          Value: !Ref SuperuserUsername
+        - Name: POSTGRES_PASSWORD
+          Value: bastet
+        - Name: POSTGRES_PORT
+          Value: '5432'
+        - Name: RABBITMQ_HOST
+          Value: localhost
+        - Name: DJANGO_SUPERUSER_PASSWORD
+          Value: !Ref SuperuserPassword
+        - Name: POSTGRES_DB_NAME
+          Value: bastet
+        - Name: AWS_REGION
+          Value: !Ref AWS::Region
+        MountPoints:
+        - SourceVolume: static_volume
+          ContainerPath: /code/static
+          ReadOnly: false
+        - SourceVolume: media_volume
+          ContainerPath: /code/media
+          ReadOnly: false
+        - SourceVolume: shared_temp
+          ContainerPath: /tmp/shared
+          ReadOnly: false
+        DependsOn:
+        - ContainerName: bastet_db
+          Condition: START
+        - ContainerName: bastet_redis
+          Condition: START
+        - ContainerName: bastet_rabbitmq
+          Condition: START
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: !Sub /ecs/${ECSClusterName}
+            awslogs-region: !Ref AWS::Region
+            awslogs-stream-prefix: ecs
+      - Name: bastet_celery
+        Image: !Ref WebContainerImage
+        Cpu: 0
+        Essential: false
+        Command:
+        - celery
+        - -A
+        - bastet
+        - worker
+        - -l
+        - info
+        Environment:
+        - Name: POSTGRES_USER
+          Value: bastet
+        - Name: DJANGO_SETTINGS_MODULE
+          Value: bastet.settings.local
+        - Name: REDIS_HOST
+          Value: localhost
+        - Name: POSTGRES_HOST
+          Value: localhost
+        - Name: POSTGRES_PASSWORD
+          Value: bastet
+        - Name: POSTGRES_PORT
+          Value: '5432'
+        - Name: RABBITMQ_HOST
+          Value: localhost
+        - Name: POSTGRES_DB_NAME
+          Value: bastet
+        MountPoints:
+        - SourceVolume: shared_temp
+          ContainerPath: /tmp/shared
+          ReadOnly: false
+        DependsOn:
+        - ContainerName: bastet_db
+          Condition: START
+        - ContainerName: bastet_redis
+          Condition: START
+        - ContainerName: bastet_rabbitmq
+          Condition: START
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: !Sub /ecs/${ECSClusterName}
+            awslogs-region: !Ref AWS::Region
+            awslogs-stream-prefix: ecs
+      - Name: bastet_nginx
+        Image: !Ref NginxContainerImage
+        Cpu: 0
+        PortMappings:
+        - Name: bastet_nginx-80-tcp
+          ContainerPort: 80
+          HostPort: 80
+          Protocol: tcp
+        Essential: true
+        MountPoints:
+        - SourceVolume: static_volume
+          ContainerPath: /home/app/web/staticfiles
+          ReadOnly: false
+        - SourceVolume: media_volume
+          ContainerPath: /home/app/web/mediafiles
+          ReadOnly: false
+        DependsOn:
+        - ContainerName: bastet_web
+          Condition: START
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: !Sub /ecs/${ECSClusterName}
+            awslogs-region: !Ref AWS::Region
+            awslogs-stream-prefix: ecs
       Volumes:
-        - Name: postgres_data
-          DockerVolumeConfiguration:
-            Scope: task
-            Driver: local
-        - Name: static_volume
-          DockerVolumeConfiguration:
-            Scope: task
-            Driver: local
-        - Name: media_volume
-          DockerVolumeConfiguration:
-            Scope: task
-            Driver: local
-        - Name: shared_temp
-          DockerVolumeConfiguration:
-            Scope: task
-            Driver: local
+      - Name: postgres_data
+        DockerVolumeConfiguration:
+          Scope: task
+          Driver: local
+      - Name: static_volume
+        DockerVolumeConfiguration:
+          Scope: task
+          Driver: local
+      - Name: media_volume
+        DockerVolumeConfiguration:
+          Scope: task
+          Driver: local
+      - Name: shared_temp
+        DockerVolumeConfiguration:
+          Scope: task
+          Driver: local
 
   EcsService:
     Type: AWS::ECS::Service
     DependsOn:
-      - TaskDefinition
-      - ClusterCPAssociation
-      - ECSCluster
+    - TaskDefinition
+    - ClusterCPAssociation
+    - ECSCluster
     Properties:
       ServiceName: !Ref ServiceAndTaskDefinitionName
       Cluster: !Ref ECSCluster
@@ -10746,21 +11156,21 @@ Resources:
           Enable: true
           Rollback: false
       LoadBalancers:
-        - ContainerName: bastet_nginx
-          ContainerPort: 80
-          TargetGroupArn: !GetAtt TargetGroup.TargetGroupArn
-  
+      - ContainerName: bastet_nginx
+        ContainerPort: 80
+        TargetGroupArn: !GetAtt TargetGroup.TargetGroupArn
+
   LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     DependsOn:
-      - TargetGroup
+    - TargetGroup
     Properties:
       Name: !Ref LoadBalancerName
-      Subnets: 
-        - !Ref PublicSubnet1
-        - !Ref PublicSubnet2
+      Subnets:
+      - !Ref PublicSubnet1
+      - !Ref PublicSubnet2
       SecurityGroups:
-        - !Ref SecurityGroup
+      - !Ref SecurityGroup
 
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -10783,40 +11193,40 @@ Resources:
       Port: 8000
       Protocol: HTTP
       DefaultActions:
-        - Type: forward
-          TargetGroupArn: !GetAtt TargetGroup.TargetGroupArn
+      - Type: forward
+        TargetGroupArn: !GetAtt TargetGroup.TargetGroupArn
 
   ECSLaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
     DependsOn:
-      - ECSCluster
+    - ECSCluster
     Properties:
       LaunchTemplateData:
         ImageId: !Ref LatestECSOptimizedAMI
         NetworkInterfaces:
-          - AssociatePublicIpAddress: true
-            DeviceIndex: 0
-            DeleteOnTermination: true
-            Groups: 
-              - !Ref SecurityGroup
+        - AssociatePublicIpAddress: true
+          DeviceIndex: 0
+          DeleteOnTermination: true
+          Groups:
+          - !Ref SecurityGroup
         InstanceType: !Ref ECSClusterInstanceType
         IamInstanceProfile:
           Arn: !GetAtt EcsInstanceProfile.Arn
         BlockDeviceMappings:
-          - DeviceName: /dev/xvda
-            Ebs:
-              VolumeSize: '30'
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: '30'
         UserData: !Base64
           Fn::Sub:
-            - |-
-              #!/bin/bash
-              echo ECS_CLUSTER=${ClusterName} >> /etc/ecs/ecs.config;
-            - ClusterName: !Ref ECSClusterName
-  
+          - |-
+            #!/bin/bash
+            echo ECS_CLUSTER=${ClusterName} >> /etc/ecs/ecs.config;
+          - ClusterName: !Ref ECSClusterName
+
   ECSAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     DependsOn:
-      - ECSCluster
+    - ECSCluster
     Properties:
       MinSize: !Ref ClusterAutoScalingMinSize
       MaxSize: !Ref ClusterAutoScalingMaxSize
@@ -10825,37 +11235,36 @@ Resources:
         LaunchTemplateId: !Ref ECSLaunchTemplate
         Version: !GetAtt ECSLaunchTemplate.LatestVersionNumber
       VPCZoneIdentifier:
-        - !Ref PublicSubnet1
-        - !Ref PublicSubnet2
+      - !Ref PublicSubnet1
+      - !Ref PublicSubnet2
       Tags:
-        - Key: Name
-          PropagateAtLaunch: true
-          Value: !Join
-            - ' - '
-            - - ECS Instance
-              - !Ref ECSClusterName
-  
+      - Key: Name
+        PropagateAtLaunch: true
+        Value: !Join
+        - ' - '
+        - - ECS Instance
+          - !Ref ECSClusterName
+
   ECSCluster:
     Type: AWS::ECS::Cluster
     DependsOn:
-      - EcsInstanceProfile
+    - EcsInstanceProfile
     Properties:
       ClusterName: !Ref ECSClusterName
       ClusterSettings:
-        - Name: containerInsights
-          Value: disabled
+      - Name: containerInsights
+        Value: disabled
       Configuration:
         ExecuteCommandConfiguration:
           Logging: DEFAULT
       ServiceConnectDefaults:
         Namespace: !Ref ECSClusterName
       Tags: []
-  
   ECSLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub /ecs/${ECSClusterName}
-  
+
   EC2CapacityProvider:
     Type: AWS::ECS::CapacityProvider
     Properties:
@@ -10865,19 +11274,19 @@ Resources:
           Status: ENABLED
           TargetCapacity: 100
         ManagedTerminationProtection: DISABLED
-  
+
   ClusterCPAssociation:
     Type: AWS::ECS::ClusterCapacityProviderAssociations
     DependsOn:
-      - ECSCluster
+    - ECSCluster
     Properties:
       Cluster: !Ref ECSClusterName
       CapacityProviders:
-        - !Ref EC2CapacityProvider
+      - !Ref EC2CapacityProvider
       DefaultCapacityProviderStrategy:
-        - Base: 0
-          Weight: 1
-          CapacityProvider: !Ref EC2CapacityProvider
+      - Base: 0
+        Weight: 1
+        CapacityProvider: !Ref EC2CapacityProvider
 
   VPC:
     Type: AWS::EC2::VPC
@@ -10886,21 +11295,21 @@ Resources:
       EnableDnsSupport: true
       EnableDnsHostnames: true
       Tags:
-        - Key: Name
-          Value: !Sub "${VPCNamePrefix}-VPC"
+      - Key: Name
+        Value: !Sub "${VPCNamePrefix}-VPC"
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
-        - Key: Name
-          Value: !Sub "${VPCNamePrefix}-InternetGateway"
+      - Key: Name
+        Value: !Sub "${VPCNamePrefix}-InternetGateway"
 
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
     DependsOn:
-      - VPC
-      - InternetGateway
+    - VPC
+    - InternetGateway
     Properties:
       VpcId: !Ref VPC
       InternetGatewayId: !Ref InternetGateway
@@ -10913,8 +11322,8 @@ Resources:
       MapPublicIpOnLaunch: true
       AvailabilityZone: !Select [0, !GetAZs ""]
       Tags:
-        - Key: Name
-          Value: !Sub "${VPCNamePrefix}-PublicSubnet1"
+      - Key: Name
+        Value: !Sub "${VPCNamePrefix}-PublicSubnet1"
 
   PublicSubnet2:
     Type: AWS::EC2::Subnet
@@ -10924,16 +11333,16 @@ Resources:
       MapPublicIpOnLaunch: true
       AvailabilityZone: !Select [1, !GetAZs ""]
       Tags:
-        - Key: Name
-          Value: !Sub "${VPCNamePrefix}-PublicSubnet2"
+      - Key: Name
+        Value: !Sub "${VPCNamePrefix}-PublicSubnet2"
 
   RouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
       Tags:
-        - Key: Name
-          Value: !Sub "${VPCNamePrefix}-PublicRouteTable"
+      - Key: Name
+        Value: !Sub "${VPCNamePrefix}-PublicRouteTable"
 
   Route:
     Type: AWS::EC2::Route
@@ -10960,16 +11369,16 @@ Resources:
       GroupDescription: Allow HTTP
       VpcId: !Ref VPC
       SecurityGroupIngress:
-        - IpProtocol: -1
-          CidrIp: 0.0.0.0/0
+      - IpProtocol: -1
+        CidrIp: 0.0.0.0/0
       SecurityGroupEgress:
-        - IpProtocol: -1
-          CidrIp: 0.0.0.0/0
+      - IpProtocol: -1
+        CidrIp: 0.0.0.0/0
       Tags:
-        - Key: Name
-          Value: !Sub "${VPCNamePrefix}-PublicSecurityGroup"
+      - Key: Name
+        Value: !Sub "${VPCNamePrefix}-PublicSecurityGroup"
 
 Outputs:
   LoadBalancerDNSName:
-    Description: "The DNS name of the load balancer"
+    Description: The DNS name of the load balancer
     Value: !Sub "http://${LoadBalancer.DNSName}:8000"
