@@ -11,8 +11,8 @@ Metadata:
         default: SageMaker Model ARN
       Parameters:
       - TechniqueModelARN
-      - ClusterModelARN1
-      - ClusterModelARN
+      - ClusterModelPart1ARN
+      - ClusterModelPart2ARN
       - FlowModelARN
 
     - Label:
@@ -38,8 +38,8 @@ Metadata:
         default: SageMaker Model Parameters
       Parameters:
       - TechniqueModelName
-      - ClusterModelName1
-      - ClusterModelName
+      - ClusterModelPart1Name
+      - ClusterModelPart2Name
       - FlowModelName
 
     - Label:
@@ -56,15 +56,15 @@ Metadata:
       - EnrichTechBatchInstanceCount
 
     - Label:
-        default: Temporal clustering 1 Batch Job Parameters
+        default: Temporal clustering Part 1 Batch Job Parameters
       Parameters:
-      - ClusterBatchInstanceType1
-      - ClusterBatchBatchInstanceCount1
+      - ClusterBatchInstanceTypePart1
+      - ClusterBatchBatchInstanceCountPart1
 
     - Label:
-        default: Temporal clustering Batch Job Parameters
+        default: Temporal clustering Part 2 Batch Job Parameters
       Parameters:
-      - ClusterBatchInstanceType
+      - ClusterBatchInstanceTypePart2
 
     - Label:
         default: Flow detector Batch Job Parameters
@@ -119,24 +119,24 @@ Parameters:
     AllowedPattern: ^arn:aws(-[a-z]+)*:[a-zA-Z0-9\-]+:[a-z0-9\-]*:[0-9]{12}:(.+)$
     ConstraintDescription: Enter a valid AWS ARN for technique model
 
-  ClusterModelName1:
+  ClusterModelPart1Name:
     Type: String
     Description: Name of Sagemaker model for cluster detection part 1
-    Default: cluster1-model
+    Default: cluster-model-1
     MinLength: 1
-  ClusterModelARN1:
+  ClusterModelPart1ARN:
     Type: String
     Description: Model package ARN for the cluster part 1 model subscribed from marketplace
     MinLength: 1
     AllowedPattern: ^arn:aws(-[a-z]+)*:[a-zA-Z0-9\-]+:[a-z0-9\-]*:[0-9]{12}:(.+)$
     ConstraintDescription: Enter a valid AWS ARN for technique model
 
-  ClusterModelName:
+  ClusterModelPart2Name:
     Type: String
     Description: Name of Sagemaker model for cluster detection part 2
-    Default: cluster-model
+    Default: cluster-model-2
     MinLength: 1
-  ClusterModelARN:
+  ClusterModelPart2ARN:
     Type: String
     Description: Model package ARN for the cluster part 2 model subscribed from marketplace
     MinLength: 1
@@ -187,7 +187,7 @@ Parameters:
     - ml.p3.8xlarge
     - ml.p3.16xlarge
 
-  ClusterBatchInstanceType1:
+  ClusterBatchInstanceTypePart1:
     Type: String
     Default: ml.p3.2xlarge
     Description: EC2 instance type for the cluster part 1 batch transform job.
@@ -196,7 +196,7 @@ Parameters:
     - ml.p3.8xlarge
     - ml.p3.16xlarge
 
-  ClusterBatchInstanceType:
+  ClusterBatchInstanceTypePart2:
     Type: String
     Default: ml.c5.4xlarge
     Description: EC2 instance type for the cluster part 2 batch transform job.
@@ -253,11 +253,11 @@ Parameters:
       for instance type set in EnrichTechBatchInstanceType.
     Default: 1
 
-  ClusterBatchBatchInstanceCount1:
+  ClusterBatchBatchInstanceCountPart1:
     Type: Number
     Description: Parallel instance count for Temporal clustering part 1 batch transform
       job. Set the value based on the available service quota for batch tranform job
-      for instance type set in ClusterBatchInstanceType1.
+      for instance type set in ClusterBatchInstanceTypePart1.
     Default: 1
 
   FlowInputMaxClusters:
@@ -618,17 +618,17 @@ Resources:
     Type: AWS::SageMaker::Model
     Properties:
       Containers:
-      - ModelPackageName: !Ref ClusterModelARN1
+      - ModelPackageName: !Ref ClusterModelPart1ARN
       ExecutionRoleArn: !GetAtt SagemakerRole.Arn
-      ModelName: !Ref ClusterModelName1
+      ModelName: !Ref ClusterModelPart1Name
       EnableNetworkIsolation: true
   ClusterModel:
     Type: AWS::SageMaker::Model
     Properties:
       Containers:
-      - ModelPackageName: !Ref ClusterModelARN
+      - ModelPackageName: !Ref ClusterModelPart2ARN
       ExecutionRoleArn: !GetAtt SagemakerRole.Arn
-      ModelName: !Ref ClusterModelName
+      ModelName: !Ref ClusterModelPart2Name
       EnableNetworkIsolation: true
   FlowModel:
     Type: AWS::SageMaker::Model
@@ -1775,7 +1775,7 @@ Resources:
             }
 
             batch_transform_job = {
-                'BatchStrategy': "MutliRecord",
+                'BatchStrategy': "MultiRecord",
                 'TransformJobName': transform_job_name,
                 'ModelName': TECHNIQUE_MODEL_NAME,
                 'TransformInput': transform_input,
@@ -5352,11 +5352,11 @@ Resources:
         - lambdaLayer
       Environment:
         Variables:
-          embedding_model_name: !Ref ClusterModelName1
-          batch_transform_job_instance_type: !Ref ClusterBatchInstanceType1
+          embedding_model_name: !Ref ClusterModelPart1Name
+          batch_transform_job_instance_type: !Ref ClusterBatchInstanceTypePart1
           batch_transform_job_max_retries: '1'
           batch_transform_job_timeout: '3600'
-          batch_transform_job_instance_count: !Ref ClusterBatchBatchInstanceCount1
+          batch_transform_job_instance_count: !Ref ClusterBatchBatchInstanceCountPart1
   createEmbeddingLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
@@ -5882,10 +5882,10 @@ Resources:
         - lambdaLayer
       Environment:
         Variables:
-          batch_transform_job_instance_type: !Ref ClusterBatchInstanceType
+          batch_transform_job_instance_type: !Ref ClusterBatchInstanceTypePart2
           batch_transform_job_max_retries: '1'
           batch_transform_job_timeout: '3600'
-          cluster_model_name: !Ref ClusterModelName
+          cluster_model_name: !Ref ClusterModelPart2Name
   createClusterLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
@@ -7431,10 +7431,10 @@ Resources:
         - lambdaLayer
       Environment:
         Variables:
-          batch_transform_job_instance_type: !Ref ClusterBatchInstanceType
+          batch_transform_job_instance_type: !Ref ClusterBatchInstanceTypePart2
           batch_transform_job_max_retries: '1'
           batch_transform_job_timeout: '3600'
-          cluster_model_name: !Ref ClusterModelName
+          cluster_model_name: !Ref ClusterModelPart2Name
           flow_input_window_size: !Ref FlowInputMaxClusters
   processClusterLogGroup:
     Type: AWS::Logs::LogGroup
