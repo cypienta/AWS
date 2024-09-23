@@ -323,18 +323,6 @@ actions['s3'] = [
     "s3:DeleteObjectVersion",
 ]
 
-actions['sagemaker'] = [
-    "sagemaker:CreateModel",
-    "sagemaker:CreateTransformJob",
-    "sagemaker:DeleteModel",
-    "sagemaker:DescribeModel",
-    "sagemaker:DescribeModelPackage",
-    "sagemaker:DescribeTransformJob",
-    "sagemaker:ListModels",
-    "sagemaker:ListTransformJobs",
-    "sagemaker:StopTransformJob",
-]
-
 actions['ssm'] = ["ssm:GetParameters"]
 
 actions['states'] = [

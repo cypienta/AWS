@@ -626,7 +626,6 @@ Resources:
             - ecs:*
             Resource: '*'
       ManagedPolicyArns:
-      - arn:aws:iam::aws:policy/service-role/AmazonSageMakerServiceCatalogProductsLambdaServiceRolePolicy
       - arn:aws:iam::aws:policy/AmazonS3FullAccess
   StepFunctionRole:
     Type: AWS::IAM::Role
@@ -654,7 +653,6 @@ Resources:
             - logs:DescribeResourcePolicies
             - logs:DescribeLogGroups
             - lambda:InvokeFunction
-            - sagemaker:DescribeTransformJob
             - xray:PutTraceSegments
             - xray:PutTelemetryRecords
             - xray:GetSamplingRules
