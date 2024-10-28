@@ -401,6 +401,26 @@ def check_permission(action):
         print(f"Error checking permission for {action}: {e}")
         return False
 
+def get_on_demand_g_vt_quota(target=4):
+    # Create a Service Quotas client
+    client = boto3.client('service-quotas')
+
+    # Define the service and quota codes for EC2 On-Demand G and VT instances
+    service_code = 'ec2'
+    quota_code = 'L-1216C47A'  # Replace with the correct quota code for G and VT instances if different
+
+    # Retrieve the quota details
+    response = client.get_service_quota(
+        ServiceCode=service_code,
+        QuotaCode=quota_code
+    )
+
+    # Extract and print quota information
+    quota_info = response['Quota']
+    print(f"Quota Name: {quota_info['QuotaName']}")
+    print(f"Quota Value: {quota_info['Value']}")
+    if quota_info['Value'] < target:
+        print("Not enough quota to run pipeline please request more")
 
 def main():
     identity = get_current_identity()
@@ -408,7 +428,10 @@ def main():
         print(f"Checking permissions for: {identity['Arn']}\n")
     else:
         print("Unable to determine identity. Proceeding with permission checks.\n")
-
+        
+    # check quotas
+    get_on_demand_g_vt_quota(target=4)
+    
     for service, action_list in actions.items():
         print(f"Service: {service}")
         for action in action_list:
