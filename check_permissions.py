@@ -407,7 +407,7 @@ def get_on_demand_g_vt_quota(target=4):
 
     # Define the service and quota codes for EC2 On-Demand G and VT instances
     service_code = 'ec2'
-    quota_code = 'L-1216C47A'  # Replace with the correct quota code for G and VT instances if different
+    quota_code = 'L-DB2E81BA'  # Replace with the correct quota code for G and VT instances if different
 
     # Retrieve the quota details
     response = client.get_service_quota(
