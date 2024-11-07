@@ -464,14 +464,14 @@ Parameters:
     Description: Container image for lambda function
     Type: String
     Default: 
-      709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-lambda-function:v0.9.1.1
+      709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-lambda-function:v0.9.1.2
     AllowedPattern: 
       ^[0-9]{12}.dkr.ecr.[a-z]{2}-[a-z]+-[0-9].amazonaws.com/[a-z0-9-]+/?[a-z0-9-]+:[a-zA-Z0-9.-_]+$
 
   AirflowContainerImage:
     Description: Container image for airflow
     Type: String
-    Default: 709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-airflow:v0.9.1.1
+    Default: 709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-airflow:v0.9.1.2
     AllowedPattern: 
       ^[0-9]{12}.dkr.ecr.[a-z]{2}-[a-z]+-[0-9].amazonaws.com/[a-z0-9-]+/?[a-z0-9-]+:[a-zA-Z0-9.-_]+$
 
@@ -506,7 +506,7 @@ Parameters:
   WebContainerImage:
     Description: Container image for web app with tag market*
     Type: String
-    Default: 709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-ui:v0.9.1.1
+    Default: 709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-ui:v0.9.1.2
     AllowedPattern: 
       ^[0-9]{12}.dkr.ecr.[a-z]{2}-[a-z]+-[0-9].amazonaws.com/[a-z0-9-]+/?[a-z0-9-]+:[a-zA-Z0-9.-]+$
 
@@ -4806,6 +4806,13 @@ Resources:
       - EC2
       ExecutionRoleArn: !GetAtt EcsModelExecutionRole.Arn
       TaskRoleArn: !GetAtt EcsModelExecutionRole.Arn
+      PlacementConstraints:
+      - Type: memberOf
+        Expression: !Sub
+        - attribute:ecs.availability-zone==${AvailabilityZone}
+        - AvailabilityZone: !Select
+          - '0'
+          - Fn::GetAZs: !Ref AWS::Region
       ContainerDefinitions:
       - Name: bastet_db
         Image: postgres:13-bullseye
@@ -4820,7 +4827,7 @@ Resources:
         - Name: POSTGRES_DB
           Value: bastet
         MountPoints:
-        - SourceVolume: postgres_data
+        - SourceVolume: !Sub "${AWS::StackName}_ui_postgres_data"
           ContainerPath: /var/lib/postgresql/data/
           ReadOnly: false
         LogConfiguration:
@@ -4906,7 +4913,7 @@ Resources:
         - SourceVolume: media_volume
           ContainerPath: /code/media
           ReadOnly: false
-        - SourceVolume: shared_temp
+        - SourceVolume: !Sub "${AWS::StackName}_shared_temp"
           ContainerPath: /tmp/shared
           ReadOnly: false
         DependsOn:
@@ -4951,16 +4958,10 @@ Resources:
         - Name: POSTGRES_DB_NAME
           Value: bastet
         MountPoints:
-        - SourceVolume: shared_temp
+        - SourceVolume: !Sub "${AWS::StackName}_shared_temp"
           ContainerPath: /tmp/shared
           ReadOnly: false
         DependsOn:
-        - ContainerName: bastet_db
-          Condition: START
-        - ContainerName: bastet_redis
-          Condition: START
-        - ContainerName: bastet_rabbitmq
-          Condition: START
         - ContainerName: bastet_web
           Condition: START
         LogConfiguration:
@@ -4995,10 +4996,14 @@ Resources:
             awslogs-region: !Ref AWS::Region
             awslogs-stream-prefix: ecs
       Volumes:
-      - Name: postgres_data
+      - Name: !Sub "${AWS::StackName}_ui_postgres_data"
         DockerVolumeConfiguration:
-          Scope: task
-          Driver: local
+          Scope: shared
+          Driver: rexray/ebs
+          Autoprovision: true
+          DriverOpts:
+            size: '30'
+            volumetype: gp2
       - Name: static_volume
         DockerVolumeConfiguration:
           Scope: task
@@ -5007,10 +5012,14 @@ Resources:
         DockerVolumeConfiguration:
           Scope: task
           Driver: local
-      - Name: shared_temp
+      - Name: !Sub "${AWS::StackName}_shared_temp"
         DockerVolumeConfiguration:
-          Scope: task
-          Driver: local
+          Scope: shared
+          Driver: rexray/ebs
+          Autoprovision: true
+          DriverOpts:
+            size: '10'
+            volumetype: gp2
 
   UIEcsService:
     Type: AWS::ECS::Service
@@ -5103,7 +5112,7 @@ Resources:
     - ECSCluster
     Properties:
       LaunchTemplateData:
-        ImageId: !Ref CpuECSOptimizedAMI
+        ImageId: !Ref DbECSOptimizedAMI
         NetworkInterfaces:
         - AssociatePublicIpAddress: true
           DeviceIndex: 0
@@ -5112,17 +5121,60 @@ Resources:
           - !Ref SecurityGroup
         InstanceType: !Ref UIECSClusterInstanceType
         IamInstanceProfile:
-          Arn: !GetAtt EcsInstanceProfile.Arn
-        BlockDeviceMappings:
-        - DeviceName: /dev/xvda
-          Ebs:
-            VolumeSize: '30'
-        UserData: !Base64
-          Fn::Sub:
-          - |-
-            #!/bin/bash
-            echo ECS_CLUSTER=${ClusterName} >> /etc/ecs/ecs.config;
-          - ClusterName: !Sub ${AWS::StackName}-cluster
+          Name: !Ref EcsInstanceProfile
+        UserData:
+          Fn::Base64:
+            Fn::Sub: |
+              #!/bin/bash
+              yum install -y aws-cfn-bootstrap
+              /opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource UIECSLaunchTemplate
+              /opt/aws/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource UIECSAutoScalingGroup
+              exec 2>>/var/log/ecs/ecs-agent-install.log
+              set -x
+              until curl -s http://localhost:51678/v1/metadata
+              do
+                sleep 1
+              done
+              docker plugin install rexray/ebs REXRAY_PREEMPT=true EBS_REGION=${AWS::Region} --grant-all-permissions
+              stop ecs
+              start ecs
+
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          packages:
+            yum:
+              aws-cli: []
+              jq: []
+              ecs-init: []
+          commands:
+            01_add_instance_to_cluster:
+              command: !Sub echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
+            02_start_ecs_agent:
+              command: start ecs
+          files:
+            /etc/cfn/cfn-hup.conf:
+              mode: 256
+              owner: root
+              group: root
+              content: !Sub |
+                [main]
+                stack=${AWS::StackId}
+                region=${AWS::Region}
+            /etc/cfn/hooks.d/cfn-auto-reloader.conf:
+              content: !Sub |
+                [cfn-auto-reloader-hook]
+                triggers=post.update
+                path=Resources.UIECSLaunchTemplate.Metadata.AWS::CloudFormation::Init
+                action=/opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource UIECSLaunchTemplate
+          services:
+            sysvinit:
+              cfn-hup:
+                enabled: 'true'
+                ensureRunning: 'true'
+                files:
+                - /etc/cfn/cfn-hup.conf
+                - /etc/cfn/hooks.d/cfn-auto-reloader.conf
 
   UIECSAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -5131,13 +5183,16 @@ Resources:
     Properties:
       MinSize: !Ref ClusterAutoScalingMinSize
       MaxSize: !Ref ClusterAutoScalingMaxSize
-      DesiredCapacity: 0
+      DesiredCapacity: 1
       LaunchTemplate:
         LaunchTemplateId: !Ref UIECSLaunchTemplate
         Version: !GetAtt UIECSLaunchTemplate.LatestVersionNumber
       VPCZoneIdentifier:
       - !Ref PublicSubnet1
-      - !Ref PublicSubnet2
+      AvailabilityZones:
+      - !Select
+        - '0'
+        - Fn::GetAZs: !Ref AWS::Region
       Tags:
       - Key: Name
         PropagateAtLaunch: true
@@ -6536,6 +6591,11 @@ Resources:
         - SourceVolume: !Sub "${AWS::StackName}_plugins_volume"
           ContainerPath: /sources/plugins
         VolumesFrom: []
+        DependsOn:
+        - ContainerName: postgres
+          Condition: HEALTHY
+        - ContainerName: redis
+          Condition: HEALTHY
         User: 0:0
         LogConfiguration:
           LogDriver: awslogs
@@ -6616,6 +6676,10 @@ Resources:
       HealthCheckProtocol: HTTP
       HealthCheckPort: 8080
       HealthCheckPath: /
+      HealthCheckTimeoutSeconds: 20
+      HealthCheckIntervalSeconds: 60
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 5
       Matcher:
         HttpCode: 200-399
       TargetType: instance
