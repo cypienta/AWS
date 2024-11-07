@@ -325,28 +325,6 @@ actions['s3'] = [
 
 actions['ssm'] = ["ssm:GetParameters"]
 
-actions['states'] = [
-    "states:ListExecutions",
-    "states:ListStateMachines",
-    "states:ListStateMachineVersions",
-    "states:ListTagsForResource",
-    "states:DescribeExecution",
-    "states:DescribeStateMachine",
-    "states:DescribeStateMachineForExecution",
-    "states:GetExecutionHistory",
-    "states:ValidateStateMachineDefinition",
-    "states:CreateStateMachine",
-    "states:DeleteStateMachine",
-    "states:DeleteStateMachineVersion",
-    "states:RedriveExecution",
-    "states:StartExecution",
-    "states:StopExecution",
-    "states:TestState",
-    "states:UpdateStateMachine",
-    "states:TagResource",
-    "states:UntagResource",
-]
-
 iam_client = boto3.client('iam')
 sts_client = boto3.client('sts')
 
