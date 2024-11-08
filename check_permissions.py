@@ -329,6 +329,21 @@ iam_client = boto3.client('iam')
 sts_client = boto3.client('sts')
 
 
+def is_root_account():
+    iam_client = boto3.client('iam')
+    try:
+        user = iam_client.get_user()
+        if 'UserName' not in user['User']:
+            return True
+        return False
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'NoSuchEntity':
+            # This error indicates that the account is a root account
+            return True
+        else:
+            raise e
+
+
 def get_current_identity():
     try:
         return sts_client.get_caller_identity()
@@ -379,6 +394,7 @@ def check_permission(action):
         print(f"Error checking permission for {action}: {e}")
         return False
 
+
 def get_on_demand_g_vt_quota(target=4):
     # Create a Service Quotas client
     client = boto3.client('service-quotas')
@@ -400,23 +416,30 @@ def get_on_demand_g_vt_quota(target=4):
     if quota_info['Value'] < target:
         print("Not enough quota to run pipeline please request more")
 
+
 def main():
-    identity = get_current_identity()
-    if identity:
-        print(f"Checking permissions for: {identity['Arn']}\n")
+    if is_root_account():
+        print("You are already using a root account. You should have all the required permissions.")
+        return
+
     else:
-        print("Unable to determine identity. Proceeding with permission checks.\n")
-        
+        identity = get_current_identity()
+        if identity:
+            print(f"Checking permissions for: {identity['Arn']}\n")
+        else:
+            print("Unable to determine identity. Proceeding with permission checks.\n")
+
+        for service, action_list in actions.items():
+            print(f"Service: {service}")
+            for action in action_list:
+                has_permission = check_permission(action)
+                status = "Granted" if has_permission else "Denied"
+                print(f"  Action: {action} - Permission: {status}")
+            print()
+
+    print("Checking quotas...")
     # check quotas
     get_on_demand_g_vt_quota(target=4)
-    
-    for service, action_list in actions.items():
-        print(f"Service: {service}")
-        for action in action_list:
-            has_permission = check_permission(action)
-            status = "Granted" if has_permission else "Denied"
-            print(f"  Action: {action} - Permission: {status}")
-        print()
 
 
 if __name__ == '__main__':

@@ -4,18 +4,6 @@ Metadata:
     ParameterGroups:
 
     - Label:
-        default: Container images
-      Parameters:
-      - NginxContainerImage
-      - WebContainerImage
-      - TechModelContainerImage
-      - ClusterModelPart1ContainerImage
-      - ClusterModelPart2ContainerImage
-      - FlowModelContainerImage
-      - LambdaContainerImage
-      - AirflowContainerImage
-
-    - Label:
         default: UI admin credentials
       Parameters:
       - SuperuserEmail
@@ -428,53 +416,6 @@ Parameters:
     AllowedPattern: ^[0-9]+$
     ConstraintDescription: Must be an integer value
 
-  TechModelContainerImage:
-    Description: Container image for technique model
-    Type: String
-    Default: 
-      709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-technique-detector:v0.9.1.1
-    AllowedPattern: 
-      ^[0-9]{12}.dkr.ecr.[a-z]{2}-[a-z]+-[0-9].amazonaws.com/[a-z0-9-]+/?[a-z0-9-]+:[a-zA-Z0-9.-_]+$
-
-  ClusterModelPart1ContainerImage:
-    Description: Container image for cluster model part 1
-    Type: String
-    Default: 
-      709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-cluster-part-1:v0.9.1.1
-    AllowedPattern: 
-      ^[0-9]{12}.dkr.ecr.[a-z]{2}-[a-z]+-[0-9].amazonaws.com/[a-z0-9-]+/?[a-z0-9-]+:[a-zA-Z0-9.-_]+$
-
-  ClusterModelPart2ContainerImage:
-    Description: Container image for cluster model part 2
-    Type: String
-    Default: 
-      709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-cluster-part-2:v0.9.1.1
-    AllowedPattern: 
-      ^[0-9]{12}.dkr.ecr.[a-z]{2}-[a-z]+-[0-9].amazonaws.com/[a-z0-9-]+/?[a-z0-9-]+:[a-zA-Z0-9.-_]+$
-
-  FlowModelContainerImage:
-    Description: Container image for flow model
-    Type: String
-    Default: 
-      709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-flow-detector:v0.9.1.1
-    AllowedPattern: 
-      ^[0-9]{12}.dkr.ecr.[a-z]{2}-[a-z]+-[0-9].amazonaws.com/[a-z0-9-]+/?[a-z0-9-]+:[a-zA-Z0-9.-_]+$
-
-  LambdaContainerImage:
-    Description: Container image for lambda function
-    Type: String
-    Default: 
-      709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-lambda-function:v0.9.1.2
-    AllowedPattern: 
-      ^[0-9]{12}.dkr.ecr.[a-z]{2}-[a-z]+-[0-9].amazonaws.com/[a-z0-9-]+/?[a-z0-9-]+:[a-zA-Z0-9.-_]+$
-
-  AirflowContainerImage:
-    Description: Container image for airflow
-    Type: String
-    Default: 709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-airflow:v0.9.1.2
-    AllowedPattern: 
-      ^[0-9]{12}.dkr.ecr.[a-z]{2}-[a-z]+-[0-9].amazonaws.com/[a-z0-9-]+/?[a-z0-9-]+:[a-zA-Z0-9.-_]+$
-
   SuperuserEmail:
     Description: Email of superuser
     Type: String
@@ -495,20 +436,6 @@ Parameters:
     Default: changemenow
     MinLength: 8
     ConstraintDescription: Must be minimum length of 8
-
-  NginxContainerImage:
-    Description: Nginx container image with tag nginx-market*
-    Type: String
-    Default: 709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-ui-nginx:v0.9.1.1
-    AllowedPattern: 
-      ^[0-9]{12}.dkr.ecr.[a-z]{2}-[a-z]+-[0-9].amazonaws.com/[a-z0-9-]+/?[a-z0-9-]+:[a-zA-Z0-9.-]+$
-
-  WebContainerImage:
-    Description: Container image for web app with tag market*
-    Type: String
-    Default: 709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-ui:v0.9.1.2
-    AllowedPattern: 
-      ^[0-9]{12}.dkr.ecr.[a-z]{2}-[a-z]+-[0-9].amazonaws.com/[a-z0-9-]+/?[a-z0-9-]+:[a-zA-Z0-9.-]+$
 
   VpcCidr:
     Description: The CIDR block for the VPC
@@ -582,6 +509,20 @@ Parameters:
     Default: /aws/service/ecs/optimized-ami/amazon-linux-2/gpu/recommended/image_id
 
 Mappings:
+  Images:
+    LambdaContainerImage: 
+      709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-lambda-function:v0.9.1.3
+    AirflowContainerImage: 709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-airflow:v0.9.1.3
+    TechModelContainerImage: 
+      709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-technique-detector:v0.9.1.1
+    ClusterModelPart1ContainerImage: 
+      709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-cluster-part-1:v0.9.1.1
+    ClusterModelPart2ContainerImage: 
+      709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-cluster-part-2:v0.9.1.1
+    FlowModelContainerImage: 
+      709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-flow-detector:v0.9.1.1
+    WebContainerImage: 709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-ui:v0.9.1.3
+    NginxContainerImage: 709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-ui-nginx:v0.9.1.1
   RegionMap:
     af-south-1:
       lambdaLayer: arn:aws:lambda:af-south-1:336392948345:layer:AWSSDKPandas-Python311:12
@@ -813,10 +754,19 @@ Resources:
                     mapping_resp = process_xml()
 
                 else:
-                    raise ValueError(f"Unable to process the current file with extension: {extension}")
+                    lambda_response = {
+                        "error": f"Unable to process the current file with extension: {extension}"
+                    }
+                    return lambda_response
 
                 # ui_cookies, ui_headers, ui_session = get_ui_session()
                 # api_push_mapping_to_ui(ui_cookies, ui_headers, ui_session, mapping_resp)
+
+                if "error" in mapping_resp:
+                    lambda_response = {
+                        "error": mapping_resp["error"]
+                    }
+                    return lambda_response
 
                 return mapping_resp
 
@@ -824,7 +774,11 @@ Resources:
                 print(f"{func}: Exception occurred while running lambda function. Uploading error file to S3.")
                 error_message = f"Error occurred in lambda function: {context.function_name}. More details can be found in CloudWatch Logs for this lambda function. The exception message is: {ex}"
                 upload_error_to_s3(bucket, error_message)
-                raise ex
+                # raise ex
+                lambda_response = {
+                    "error": "Failed to process the input file"
+                }
+                return lambda_response
 
 
         def process_csv():
@@ -836,8 +790,21 @@ Resources:
             global TEMP_INPUT_FILENAME
             func = "process_csv"
 
-            og_user_data = pd.read_csv(TEMP_INPUT_FILENAME)
-            user_data = json.loads(og_user_data.iloc[0].to_json())
+            try:
+                og_user_data = pd.read_csv(TEMP_INPUT_FILENAME)
+            except Exception as e:
+                lambda_response = {
+                    "error": "Invalid CSV file. Please check your file format and try again."
+                }
+                return lambda_response
+
+            try:
+                user_data = json.loads(og_user_data.iloc[0].to_json())
+            except Exception as e:
+                lambda_response = {
+                    "error": "Unable to fetch first alert from the file. Please check you have atleast 1 input alert in the file."
+                }
+                return lambda_response
 
             user_fields = user_data.keys()
             print(f"{func}: user fields: {user_fields}")
@@ -891,8 +858,21 @@ Resources:
             global TEMP_INPUT_FILENAME
             func = "process_json"
 
-            og_user_data = json.load(open(TEMP_INPUT_FILENAME, "r"))
-            user_data = og_user_data[0]
+            try:
+                og_user_data = json.load(open(TEMP_INPUT_FILENAME, "r"))
+            except Exception as e:
+                lambda_response = {
+                    "error": "Invalid JSON file. Please check your file format and try again."
+                }
+                return lambda_response
+
+            try:
+                user_data = og_user_data[0]
+            except Exception as e:
+                lambda_response = {
+                    "error": "Unable to fetch first alert from the file. Please check you have atleast 1 input alert in the file."
+                }
+                return lambda_response
 
             user_data = flatten_json(user_data)
 
@@ -950,16 +930,26 @@ Resources:
             func = "process_xml"
 
             converted_json_file = "/tmp/input.json"
-            convert_xml_to_json(TEMP_INPUT_FILENAME, converted_json_file)
+            lambda_response = convert_xml_to_json(TEMP_INPUT_FILENAME, converted_json_file)
+            if lambda_response is not None:
+                return lambda_response
 
             og_user_data = json.load(open(converted_json_file, "r"))
 
             og_user_data = find_first_list_of_dicts(og_user_data)
 
             if og_user_data is None:
-                raise ValueError("No list of dictionaries found in the JSON data.")
+                lambda_response = {
+                    "error": "No list of alerts found in file. Please check your input data and try again."
+                }
 
-            user_data = og_user_data[0]
+            try:
+                user_data = og_user_data[0]
+            except Exception as e:
+                lambda_response = {
+                    "error": "Unable to fetch first alert from the file. Please check you have atleast 1 input alert in the file."
+                }
+                return lambda_response
 
             user_data = flatten_json(user_data)
 
@@ -3164,6 +3154,13 @@ Resources:
                 with open(xml_file_path, 'r', encoding='utf-8') as xml_file:
                     xml_content = xml_file.read()
 
+            except Exception as e:
+                lambda_response = {
+                    "error": "Unable to parse xml file. Invalid XML file. Please check your file format and try again."
+                }
+                return lambda_response
+
+            try:
                 # Parse XML to OrderedDict
                 parsed_xml = xmltodict.parse(xml_content, process_namespaces=True)
 
@@ -3176,8 +3173,12 @@ Resources:
                 print(f"Successfully converted '{xml_file_path}' to '{json_file_path}'")
 
             except Exception as e:
-                print(f"Error: {e}")
-                raise e
+                lambda_response = {
+                    "error": "Unable to parse xml file to json. Please check your file format and try again."
+                }
+                return lambda_response
+
+            return None
 
 
         def parse_s3_path(s3_path):
@@ -4863,7 +4864,7 @@ Resources:
             awslogs-region: !Ref AWS::Region
             awslogs-stream-prefix: ecs
       - Name: bastet_web
-        Image: !Ref WebContainerImage
+        Image: !FindInMap [Images, WebContainerImage]
         Cpu: 0
         PortMappings:
         - Name: bastet_web-8000-tcp
@@ -4930,7 +4931,7 @@ Resources:
             awslogs-region: !Ref AWS::Region
             awslogs-stream-prefix: ecs
       - Name: bastet_celery
-        Image: !Ref WebContainerImage
+        Image: !FindInMap [Images, WebContainerImage]
         Cpu: 0
         Essential: true
         Command:
@@ -4971,7 +4972,7 @@ Resources:
             awslogs-region: !Ref AWS::Region
             awslogs-stream-prefix: ecs
       - Name: bastet_nginx
-        Image: !Ref NginxContainerImage
+        Image: !FindInMap [Images, NginxContainerImage]
         Cpu: 0
         PortMappings:
         - Name: bastet_nginx-80-tcp
@@ -5474,7 +5475,7 @@ Resources:
       TaskRoleArn: !GetAtt EcsModelExecutionRole.Arn
       ContainerDefinitions:
       - Name: model
-        Image: !Ref TechModelContainerImage
+        Image: !FindInMap [Images, TechModelContainerImage]
         Cpu: 0
         Essential: true
         EntryPoint:
@@ -5569,7 +5570,7 @@ Resources:
       TaskRoleArn: !GetAtt EcsModelExecutionRole.Arn
       ContainerDefinitions:
       - Name: model
-        Image: !Ref ClusterModelPart1ContainerImage
+        Image: !FindInMap [Images, ClusterModelPart1ContainerImage]
         Cpu: 0
         Essential: true
         EntryPoint:
@@ -5664,7 +5665,7 @@ Resources:
       TaskRoleArn: !GetAtt EcsModelExecutionRole.Arn
       ContainerDefinitions:
       - Name: model
-        Image: !Ref ClusterModelPart2ContainerImage
+        Image: !FindInMap [Images, ClusterModelPart2ContainerImage]
         Cpu: 0
         Essential: true
         EntryPoint:
@@ -5754,7 +5755,7 @@ Resources:
       TaskRoleArn: !GetAtt EcsModelExecutionRole.Arn
       ContainerDefinitions:
       - Name: model
-        Image: !Ref FlowModelContainerImage
+        Image: !FindInMap [Images, FlowModelContainerImage]
         Cpu: 0
         Essential: true
         EntryPoint:
@@ -5842,7 +5843,7 @@ Resources:
       TaskRoleArn: !GetAtt EcsModelExecutionRole.Arn
       ContainerDefinitions:
       - Name: lambda
-        Image: !Ref LambdaContainerImage
+        Image: !FindInMap [Images, LambdaContainerImage]
         Cpu: 0
         Essential: true
         Environment:
@@ -6093,7 +6094,7 @@ Resources:
           StartPeriod: 10
         SystemControls: []
       - Name: airflow-webserver
-        Image: !Ref AirflowContainerImage
+        Image: !FindInMap [Images, AirflowContainerImage]
         Cpu: 0
         PortMappings:
         - Name: airflow-webserver-8080-tcp
@@ -6213,7 +6214,7 @@ Resources:
           StartPeriod: 30
         SystemControls: []
       - Name: airflow-scheduler
-        Image: !Ref AirflowContainerImage
+        Image: !FindInMap [Images, AirflowContainerImage]
         Cpu: 0
         PortMappings: []
         Essential: true
@@ -6327,7 +6328,7 @@ Resources:
           StartPeriod: 30
         SystemControls: []
       - Name: airflow-worker
-        Image: !Ref AirflowContainerImage
+        Image: !FindInMap [Images, AirflowContainerImage]
         Cpu: 0
         PortMappings: []
         Essential: true
@@ -6432,7 +6433,7 @@ Resources:
             awslogs-stream-prefix: ecs
         SystemControls: []
       - Name: airflow-triggerer
-        Image: !Ref AirflowContainerImage
+        Image: !FindInMap [Images, AirflowContainerImage]
         Cpu: 0
         PortMappings: []
         Essential: true
@@ -6540,7 +6541,7 @@ Resources:
           StartPeriod: 30
         SystemControls: []
       - Name: airflow-init
-        Image: !Ref AirflowContainerImage
+        Image: !FindInMap [Images, AirflowContainerImage]
         Cpu: 0
         PortMappings: []
         Essential: false
