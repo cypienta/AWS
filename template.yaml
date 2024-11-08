@@ -510,19 +510,30 @@ Parameters:
 
 Mappings:
   Images:
-    LambdaContainerImage: 
-      709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-lambda-function:v0.9.1.3
-    AirflowContainerImage: 709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-airflow:v0.9.1.3
-    TechModelContainerImage: 
-      709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-technique-detector:v0.9.1.1
-    ClusterModelPart1ContainerImage: 
-      709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-cluster-part-1:v0.9.1.1
-    ClusterModelPart2ContainerImage: 
-      709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-cluster-part-2:v0.9.1.1
-    FlowModelContainerImage: 
-      709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-flow-detector:v0.9.1.1
-    WebContainerImage: 709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-ui:v0.9.1.3
-    NginxContainerImage: 709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-ui-nginx:v0.9.1.1
+    LambdaContainerImage:
+      ImageUri: >-
+        709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-lambda-function:v0.9.1.3
+    AirflowContainerImage:
+      ImageUri: >-
+        709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-airflow:v0.9.1.3
+    TechModelContainerImage:
+      ImageUri: >-
+        709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-technique-detector:v0.9.1.1
+    ClusterModelPart1ContainerImage:
+      ImageUri: >-
+        709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-cluster-part-1:v0.9.1.1
+    ClusterModelPart2ContainerImage:
+      ImageUri: >-
+        709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-cluster-part-2:v0.9.1.1
+    FlowModelContainerImage:
+      ImageUri: >-
+        709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-flow-detector:v0.9.1.1
+    WebContainerImage:
+      ImageUri: >-
+        709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-ui:v0.9.1.3
+    NginxContainerImage:
+      ImageUri: >-
+        709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-ui-nginx:v0.9.1.1
   RegionMap:
     af-south-1:
       lambdaLayer: arn:aws:lambda:af-south-1:336392948345:layer:AWSSDKPandas-Python311:12
@@ -4864,7 +4875,7 @@ Resources:
             awslogs-region: !Ref AWS::Region
             awslogs-stream-prefix: ecs
       - Name: bastet_web
-        Image: !FindInMap [Images, WebContainerImage]
+        Image: !FindInMap [Images, WebContainerImage, ImageUri]
         Cpu: 0
         PortMappings:
         - Name: bastet_web-8000-tcp
@@ -4931,7 +4942,7 @@ Resources:
             awslogs-region: !Ref AWS::Region
             awslogs-stream-prefix: ecs
       - Name: bastet_celery
-        Image: !FindInMap [Images, WebContainerImage]
+        Image: !FindInMap [Images, WebContainerImage, ImageUri]
         Cpu: 0
         Essential: true
         Command:
@@ -4972,7 +4983,7 @@ Resources:
             awslogs-region: !Ref AWS::Region
             awslogs-stream-prefix: ecs
       - Name: bastet_nginx
-        Image: !FindInMap [Images, NginxContainerImage]
+        Image: !FindInMap [Images, NginxContainerImage, ImageUri]
         Cpu: 0
         PortMappings:
         - Name: bastet_nginx-80-tcp
@@ -5475,7 +5486,7 @@ Resources:
       TaskRoleArn: !GetAtt EcsModelExecutionRole.Arn
       ContainerDefinitions:
       - Name: model
-        Image: !FindInMap [Images, TechModelContainerImage]
+        Image: !FindInMap [Images, TechModelContainerImage, ImageUri]
         Cpu: 0
         Essential: true
         EntryPoint:
@@ -5570,7 +5581,7 @@ Resources:
       TaskRoleArn: !GetAtt EcsModelExecutionRole.Arn
       ContainerDefinitions:
       - Name: model
-        Image: !FindInMap [Images, ClusterModelPart1ContainerImage]
+        Image: !FindInMap [Images, ClusterModelPart1ContainerImage, ImageUri]
         Cpu: 0
         Essential: true
         EntryPoint:
@@ -5665,7 +5676,7 @@ Resources:
       TaskRoleArn: !GetAtt EcsModelExecutionRole.Arn
       ContainerDefinitions:
       - Name: model
-        Image: !FindInMap [Images, ClusterModelPart2ContainerImage]
+        Image: !FindInMap [Images, ClusterModelPart2ContainerImage, ImageUri]
         Cpu: 0
         Essential: true
         EntryPoint:
@@ -5755,7 +5766,7 @@ Resources:
       TaskRoleArn: !GetAtt EcsModelExecutionRole.Arn
       ContainerDefinitions:
       - Name: model
-        Image: !FindInMap [Images, FlowModelContainerImage]
+        Image: !FindInMap [Images, FlowModelContainerImage, ImageUri]
         Cpu: 0
         Essential: true
         EntryPoint:
@@ -5843,7 +5854,7 @@ Resources:
       TaskRoleArn: !GetAtt EcsModelExecutionRole.Arn
       ContainerDefinitions:
       - Name: lambda
-        Image: !FindInMap [Images, LambdaContainerImage]
+        Image: !FindInMap [Images, LambdaContainerImage, ImageUri]
         Cpu: 0
         Essential: true
         Environment:
@@ -6094,7 +6105,7 @@ Resources:
           StartPeriod: 10
         SystemControls: []
       - Name: airflow-webserver
-        Image: !FindInMap [Images, AirflowContainerImage]
+        Image: !FindInMap [Images, AirflowContainerImage, ImageUri]
         Cpu: 0
         PortMappings:
         - Name: airflow-webserver-8080-tcp
@@ -6214,7 +6225,7 @@ Resources:
           StartPeriod: 30
         SystemControls: []
       - Name: airflow-scheduler
-        Image: !FindInMap [Images, AirflowContainerImage]
+        Image: !FindInMap [Images, AirflowContainerImage, ImageUri]
         Cpu: 0
         PortMappings: []
         Essential: true
@@ -6328,7 +6339,7 @@ Resources:
           StartPeriod: 30
         SystemControls: []
       - Name: airflow-worker
-        Image: !FindInMap [Images, AirflowContainerImage]
+        Image: !FindInMap [Images, AirflowContainerImage, ImageUri]
         Cpu: 0
         PortMappings: []
         Essential: true
@@ -6433,7 +6444,7 @@ Resources:
             awslogs-stream-prefix: ecs
         SystemControls: []
       - Name: airflow-triggerer
-        Image: !FindInMap [Images, AirflowContainerImage]
+        Image: !FindInMap [Images, AirflowContainerImage, ImageUri]
         Cpu: 0
         PortMappings: []
         Essential: true
@@ -6541,7 +6552,7 @@ Resources:
           StartPeriod: 30
         SystemControls: []
       - Name: airflow-init
-        Image: !FindInMap [Images, AirflowContainerImage]
+        Image: !FindInMap [Images, AirflowContainerImage, ImageUri]
         Cpu: 0
         PortMappings: []
         Essential: false
