@@ -1365,6 +1365,12 @@ Resources:
                 else:
                     # if self loop is absent too, then required fields src, dest cannot be mapped. skip event
                     # TODO: map all remaingin fields to unused
+                    read_fields = list(itertools.chain(*to_internal_mappings.values()))
+
+                    add_to_unused_fields = list(set(event.keys()) - set(read_fields))
+
+                    to_internal_mappings["unused"].extend(add_to_unused_fields)
+
                     return None, to_internal_mappings, event_node_feature
 
             # convert to unix timestamp
