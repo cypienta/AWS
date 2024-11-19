@@ -51,7 +51,23 @@ Before deploying, ensure you have the following:
 1. **AWS CLI** installed and configured with appropriate credentials.
 2. **IAM Permissions**: Ensure the IAM user or role deploying the stack has the necessary permissions to create the resources in the template.
 3. **CloudFormation Ready Account**: Your AWS account should have a default VPC and the required service limits.
-4. (Optional) **Domain Configuration**: If the pipeline requires DNS records, configure your domain in Route 53.
+
+**Permission and Quota Checker**
+The repository includes a Python script, check_permissions.py, to validate the required IAM permissions and quotas for deploying the pipeline.
+
+Key Features:
+Permission Validation: Checks if your IAM user/role has the required permissions for the services used in the pipeline.
+Quota Check: Validates EC2 instance quotas for specific instance types required by the pipeline.
+How to Use:
+Run the script before deploying the pipeline:
+
+```bash
+Copy code
+python check_permissions.py
+```
+
+Ensure all permissions are granted and quotas are sufficient before proceeding with the deployment.
+
 
 ---
 
