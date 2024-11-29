@@ -11,10 +11,10 @@ Metadata:
       - SuperuserPassword
 
     - Label:
-        default: Database credentials
+        default: Airflow admin credentials
       Parameters:
-      - DbUsername
-      - DbPassword
+      - AirflowUsername
+      - AirflowPassword
 
     - Label:
         default: Load Balancer Configuration
@@ -48,7 +48,6 @@ Metadata:
     - Label:
         default: UI ECS Configuration
       Parameters:
-      - Cpu
       - Memory
       - UIECSClusterInstanceType
 
@@ -105,6 +104,12 @@ Metadata:
       - VpcCidr
       - Subnet1Cidr
       - Subnet2Cidr
+
+    - Label:
+        default: Database credentials
+      Parameters:
+      - DbUsername
+      - DbPassword
 
 Parameters:
 
@@ -164,7 +169,7 @@ Parameters:
   UIECSClusterInstanceType:
     Type: String
     Description: ECS Cluster instance type for EC2
-    Default: t3a.large
+    Default: m5.xlarge
     AllowedValues:
     - t2.large
     - t3.large
@@ -232,35 +237,23 @@ Parameters:
   ClusterPart1ECSClusterInstanceType:
     Type: String
     Description: ECS Cluster instance type for Cluster model part 1 EC2. Choose a
-      GPU instance type
-    Default: g4dn.xlarge
+      CPU instance type
+    Default: c5.2xlarge
     AllowedValues:
-    - g4dn.xlarge
-    - g4dn.2xlarge
-    - g4dn.4xlarge
-    - g4dn.8xlarge
-    - g4dn.12xlarge
-    - g4dn.16xlarge
-    - p5.48xlarge
-    - p3.2xlarge
-    - p3.8xlarge
-    - p3.16xlarge
-    - p2.xlarge
-    - p2.8xlarge
-    - p2.16xlarge
-    - g5.xlarge
-    - g5.2xlarge
-    - g5.4xlarge
-    - g5.8xlarge
-    - g5.12xlarge
-    - g5.16xlarge
-    - g5.24xlarge
-    - g5.48xlarge
+    - c5.2xlarge
+    - c5.4xlarge
+    - c5.9xlarge
+    - c5.12xlarge
+    - c5.18xlarge
+    - c5.24xlarge
+    - c4.2xlarge
+    - c4.4xlarge
+    - c4.8xlarge
 
   ClusterPart2ECSClusterInstanceType:
     Type: String
     Description: ECS Cluster instance type for cluster model part 2 EC2. Choose a
-      GPU instance type
+      CPU instance type
     Default: c5.xlarge
     AllowedValues:
     - c5.large
@@ -279,7 +272,7 @@ Parameters:
 
   FlowECSClusterInstanceType:
     Type: String
-    Description: ECS Cluster instance type for Technique model EC2. Choose a GPU instance
+    Description: ECS Cluster instance type for Technique model EC2. Choose a CPU instance
       type
     Default: c5.xlarge
     AllowedValues:
@@ -302,17 +295,8 @@ Parameters:
     Description: ECS Cluster instance type for EC2
     Default: t3a.large
     AllowedValues:
-    - t2.micro
-    - t2.small
-    - t2.medium
     - t2.large
-    - t3.micro
-    - t3.small
-    - t3.medium
     - t3.large
-    - t3a.micro
-    - t3a.small
-    - t3a.medium
     - t3a.large
     - m5.large
     - m5.xlarge
@@ -322,7 +306,6 @@ Parameters:
     - m5a.xlarge
     - m5a.2xlarge
     - m5a.4xlarge
-    - m6g.medium
     - m6g.large
     - m6g.xlarge
     - m6g.2xlarge
@@ -348,19 +331,6 @@ Parameters:
     - m6g.medium
     - m6g.xlarge
     - m6g.2xlarge
-
-  Cpu:
-    Description: Number of CPU units used by the UI and Database task. 1 vCPU = 1024
-    Type: String
-    Default: 2048
-    AllowedValues:
-    - 256
-    - 512
-    - 1024
-    - 2048
-    - 4096
-    - 8192
-    - 16384
 
   Memory:
     Description: Amount of memory (in MiB) used by the UI and Database task. 1 GB
@@ -426,14 +396,28 @@ Parameters:
   SuperuserUsername:
     Description: Superuser username. Minimum length of 3.
     Type: String
-    Default: maestro
+    Default: cypienta
     MinLength: 3
     ConstraintDescription: Must be minimum length of 3
 
   SuperuserPassword:
     Description: Superuser password. Minimum length of 8
     Type: String
-    Default: changemenow
+    Default: cypienta
+    MinLength: 8
+    ConstraintDescription: Must be minimum length of 8
+
+  AirflowUsername:
+    Description: Airflow username. Minimum length of 3.
+    Type: String
+    Default: cypienta
+    MinLength: 3
+    ConstraintDescription: Must be minimum length of 3
+
+  AirflowPassword:
+    Description: Airflow password. Minimum length of 8
+    Type: String
+    Default: cypienta
     MinLength: 8
     ConstraintDescription: Must be minimum length of 8
 
@@ -512,28 +496,37 @@ Mappings:
   Images:
     LambdaContainerImage:
       ImageUri: >-
-        709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-lambda-function:v0.9.1.5
+        709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-lambda-function:v0.9.2.1
     AirflowContainerImage:
       ImageUri: >-
-        709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-airflow:v0.9.1.4
+        709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-airflow:v0.9.2.1
     TechModelContainerImage:
       ImageUri: >-
-        709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-technique-detector:v0.9.1.1
+        709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-technique-detector:v0.9.1.3
     ClusterModelPart1ContainerImage:
       ImageUri: >-
-        709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-cluster-part-1:v0.9.1.1
+        709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-cluster-part-1:v0.9.1.4
     ClusterModelPart2ContainerImage:
       ImageUri: >-
-        709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-cluster-part-2:v0.9.1.1
+        709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-cluster-part-2:v0.9.1.3
     FlowModelContainerImage:
       ImageUri: >-
-        709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-flow-detector:v0.9.1.1
+        709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-flow-detector:v0.9.1.3
     WebContainerImage:
       ImageUri: >-
-        709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-ui:v0.9.1.3
+        709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-ui:v0.9.2.1
     NginxContainerImage:
       ImageUri: >-
         709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-ui-nginx:v0.9.1.1
+
+  UI:
+    ServiceWorkerUsername:
+      Value: >-
+        service_worker
+    ServiceWorkerPassword:
+      Value: >-
+        service_worker_admin
+
   RegionMap:
     af-south-1:
       lambdaLayer: arn:aws:lambda:af-south-1:336392948345:layer:AWSSDKPandas-Python311:12
@@ -651,6 +644,7 @@ Resources:
             Resource: '*'
       ManagedPolicyArns:
       - arn:aws:iam::aws:policy/AmazonS3FullAccess
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
 
   createMapping:
     Type: AWS::Serverless::Function
@@ -746,6 +740,8 @@ Resources:
                 extension = os.path.splitext(input_filename)[-1]
                 TEMP_INPUT_FILENAME = f"/tmp/input.{extension}"
 
+                clear_temp_dir()
+
                 print(f"{func}: Download input file: {bucket}/{input_filename}")
                 try:
                     S3_CLIENT.download_file(bucket, input_filename, TEMP_INPUT_FILENAME)
@@ -758,7 +754,7 @@ Resources:
                 if extension == ".csv":
                     mapping_resp = process_csv()
 
-                elif extension == ".json":
+                elif extension == ".json" or extension == ".jsonl":
                     mapping_resp = process_json()
 
                 elif extension == ".xml":
@@ -869,19 +865,61 @@ Resources:
             global TEMP_INPUT_FILENAME
             func = "process_json"
 
+            extension = os.path.splitext(TEMP_INPUT_FILENAME)[-1]
+
+            if extension == ".jsonl":
+                convert_json_lines_to_json_list()
+
+            # else:
+
+            #     valid_json_line_count = 0
+            #     with open(TEMP_INPUT_FILENAME, "r") as f:
+            #         for line in f:
+            #             try:
+            #                 check_file_format = json.loads(line)
+            #                 valid_json_line_count += 1
+            #             except Exception as e:
+            #                 pass
+
+            #     if valid_json_line_count > 0:
+            #         convert_json_to_json_list()
+
             try:
                 og_user_data = json.load(open(TEMP_INPUT_FILENAME, "r"))
             except Exception as e:
-                lambda_response = {
-                    "error": "Invalid JSON file. Please check your file format and try again."
-                }
-                return lambda_response
+
+                print(f"{func}: Error while loading file as json: {e}")
+                print(f"{func}: Trying to load file as json lines")
+
+                valid_json_line_count = 0
+                with open(TEMP_INPUT_FILENAME, "r") as f:
+                    for line in f:
+                        try:
+                            check_file_format = json.loads(line)
+                            valid_json_line_count += 1
+                        except Exception as e:
+                            pass
+
+                if valid_json_line_count > 0:
+                    convert_json_lines_to_json_list()
+
+                    og_user_data = json.load(open(TEMP_INPUT_FILENAME, "r"))
+
+                else:
+                    lambda_response = {
+                        "error": "Invalid JSON file. Please check your file format and try again."
+                    }
+                    return lambda_response
+
+            if isinstance(og_user_data, dict):
+                print(f"{func}: Single json object")
+                og_user_data = [og_user_data]
 
             try:
                 user_data = og_user_data[0]
             except Exception as e:
                 lambda_response = {
-                    "error": "Unable to fetch first alert from the file. Please check you have atleast 1 input alert in the file."
+                    "error": "Unable to fetch first alert from the file. Please check you have atleast 1 valid input alert in the file."
                 }
                 return lambda_response
 
@@ -3160,6 +3198,24 @@ Resources:
             return None
 
 
+        def convert_json_lines_to_json_list():
+            '''
+            Convert json lines to json list 
+            '''
+            global TEMP_INPUT_FILENAME
+
+            new_json = []
+            with open(TEMP_INPUT_FILENAME, 'r') as f:
+                for line in f:
+                    try:
+                        json_data = json.loads(line)
+                        new_json.append(json_data)
+                    except Exception as e:
+                        pass
+
+            json.dump(new_json, open(TEMP_INPUT_FILENAME, 'w'))
+
+
         def convert_xml_to_json(xml_file_path, json_file_path):
             """
             Converts an XML file to a JSON file.
@@ -3263,8 +3319,8 @@ Resources:
       Environment:
         Variables:
           ui_lb_url: !GetAtt UILoadBalancer.DNSName
-          ui_password: !Ref SuperuserPassword
-          ui_username: !Ref SuperuserUsername
+          ui_password: !FindInMap [UI, ServiceWorkerPassword, Value]
+          ui_username: !FindInMap [UI, ServiceWorkerUsername, Value]
       Events:
         S3ObjectCreated:
           Type: S3
@@ -3331,9 +3387,13 @@ Resources:
         import urllib
         import json
         import glob
+        import re
+        import gc
         import copy
         from dateutil import parser
+        from datetime import datetime, timezone
         import itertools
+        import uuid
 
         import boto3
         import pandas as pd
@@ -3342,10 +3402,13 @@ Resources:
         # Install ijson pip library to handle large json input files
         os.makedirs("/tmp/pylib", exist_ok=True)
         os.makedirs("/tmp/nltk_download", exist_ok=True)
-        subprocess.call('pip install xmltodict -t /tmp/pylib/ --no-cache-dir'.split(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.call('pip install xmltodict nltk -t /tmp/pylib/ --no-cache-dir'.split(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         sys.path.insert(1, '/tmp/pylib/')
 
         import xmltodict
+
+        import nltk
+        from nltk.corpus import words
 
         S3_CLIENT = boto3.client("s3")
 
@@ -3355,9 +3418,42 @@ Resources:
         TEMP_PIPELINE_MAPPING = "/tmp/mapping.json"
 
         TEMP_PIPELINE_INPUT = "/tmp/pipeline_input.json"
+        TEMP_RAW_JSON_INPUT = "/tmp/raw_json_input.json"
 
         PATH_TO_UI_UPLOAD_CONFIG = "mapping/upload_config.json"
         TEMP_UI_UPLOAD_CONFIG = "/TMP/upload_config.json"
+
+        TEMP_SKIPPED_EVENTS_FILENAME = "/tmp/skip_events.json"
+        TEMP_NODE_FEATURE_INPUT_FILENAME = f"/tmp/node_feature.json"
+        TEMP_NODE_FEATURE_ORIGINAL_INPUT_FILENAME = f"/tmp/node_feature_original.json"
+        TEMP_USER_NODE_FEATURE_FILE = "/tmp/user_node_feature.json"
+
+        NODE_FEATURE_EXISTS_IN_REQUEST = False
+        USER_NODE_FEATURE_EXISTS = False
+
+        nltk.data.path.append("/tmp/nltk_download")
+        nltk.download("punkt", download_dir="/tmp/nltk_download")
+        nltk.download('words', download_dir="/tmp/nltk_download")
+
+        ENGLISH_WORDS = set(words.words())
+
+        BLACK_LIST_KEYS = [
+            '_raw',
+            '_si',
+            'splunk_server',
+            'ComputerName',
+            'source',
+            'tag',
+            'pa',
+            'ssl_issuer',
+            'ssl_subject',
+            'query',
+            'FriendlyName',
+            'service_name',
+            'content{}',
+            'Mandatory_Label',
+            'vendor_definition'
+        ]
 
 
         def lambda_handler(event, context):
@@ -3373,6 +3469,7 @@ Resources:
             global TEMP_USER_MAPPING
             global TEMP_PIPELINE_MAPPING
             global TEMP_PIPELINE_INPUT
+            global NODE_FEATURE_EXISTS_IN_REQUEST
 
             func = "lambda_handler"
 
@@ -3388,6 +3485,8 @@ Resources:
                 extension = os.path.splitext(input_filename)[-1]
                 TEMP_INPUT_FILENAME = f"/tmp/input.{extension}"
 
+                clear_temp_dir()
+
                 if is_disable_upload(bucket):
                     return
 
@@ -3400,22 +3499,24 @@ Resources:
                     print(f"{func}: Failed to download input file")
                     raise e
 
-                path_to_user_mapping = f"mapping/user_field_mapping/{field_mapping_name}.json"
-                try:
-                    S3_CLIENT.download_file(bucket, path_to_user_mapping, TEMP_USER_MAPPING)
-                    print(f"{func}: Mapping file download completed")
+                if field_mapping_name == "cypienta_cef":
+                    mapper = cypienta_get_cef_to_internal_mappings()
+                else:
+                    path_to_user_mapping = f"mapping/user_field_mapping/{field_mapping_name}.json"
+                    try:
+                        S3_CLIENT.download_file(bucket, path_to_user_mapping, TEMP_USER_MAPPING)
+                        print(f"{func}: Mapping file download completed")
 
-                except Exception as e:
-                    print(f"{func}: Failed to download mapping file")
-                    raise e
-
-                mapper = get_mapper()
+                    except Exception as e:
+                        print(f"{func}: Failed to download mapping file")
+                        raise e
+                    mapper = get_mapper()
                 json.dump(mapper, open(TEMP_PIPELINE_MAPPING, "w"))
 
                 if extension == ".csv":
                     process_csv()
 
-                elif extension == ".json":
+                elif extension == ".json" or extension == ".jsonl":
                     process_json()
 
                 elif extension == ".xml":
@@ -3423,10 +3524,6 @@ Resources:
 
                 else:
                     raise ValueError(f"Unable to process the current file with extension: {extension}")
-
-                pipeline_input_json = json.load(open(TEMP_PIPELINE_INPUT, "r"))
-                pipeline_input_json = {"input": pipeline_input_json}
-                json.dump(pipeline_input_json, open(TEMP_PIPELINE_INPUT, "w"))
 
                 path_to_pipeline_mapping = f"mapping/field_mapping/{field_mapping_name}.json"
                 try:
@@ -3436,6 +3533,44 @@ Resources:
                 except Exception as e:
                     print(f"{func}: Failed to upload mapping file")
                     raise e
+
+                pipeline_input_json = json.load(open(TEMP_PIPELINE_INPUT, "r"))
+                json.dump(pipeline_input_json, open(TEMP_RAW_JSON_INPUT, "w"))
+
+                print(f"{func}: Fetch mapper")
+                if field_mapping_name == "cypienta_cef":
+                    cef_to_internal_mappings = cypienta_get_cef_to_internal_mappings()
+                else:
+                    cef_to_internal_mappings = json.load(open(TEMP_PIPELINE_MAPPING, "r"))
+
+                print(f"{func}: Create event id")
+                create_event_id()
+
+                print(f"{func}: Save to raw input folder")
+                path_to_raw_pipeline_input = f"mapping/raw/{field_mapping_name}/{upload_filename}.json"
+
+                try:
+                    S3_CLIENT.upload_file(TEMP_RAW_JSON_INPUT, bucket, path_to_raw_pipeline_input)
+                    print(f"{func}: Mapping file upload completed")
+
+                except Exception as e:
+                    print(f"{func}: Failed to upload mapping file")
+                    raise e
+
+                print(f"{func}: Map the current input to internal format")
+                skipped_event_size = 0
+                skip_input, skipped_event_size = map_to_internal(bucket, cef_to_internal_mappings, upload_filename, field_mapping_name)
+
+                if skip_input:
+                    print(f"{func}: Skip the current input")
+                    return
+
+                print(f"{func}: Save input to pipeline input folder")
+                pipeline_input_json = json.load(open(TEMP_PIPELINE_INPUT, "r"))
+                pipeline_input_json = {"input": pipeline_input_json}
+                if NODE_FEATURE_EXISTS_IN_REQUEST:
+                    pipeline_input_json["node_feature"] = json.load(open(TEMP_NODE_FEATURE_INPUT_FILENAME, "r"))
+                json.dump(pipeline_input_json, open(TEMP_PIPELINE_INPUT, "w"))
 
                 path_to_pipeline_input = f"input/{field_mapping_name}/{upload_filename}.json"
 
@@ -3452,6 +3587,446 @@ Resources:
                 error_message = f"Error occurred in lambda function: {context.function_name}. More details can be found in CloudWatch Logs for this lambda function. The exception message is: {ex}"
                 upload_error_to_s3(bucket, error_message)
                 raise ex
+
+
+        def map_to_internal(bucket, cef_to_internal_mappings, upload_filename, field_mapping_name):
+            '''
+            Map chunk of input from CEF to internal and insert to event table.
+            save skipped events to s3.
+            Args:
+                bucket: Bucket name
+                cef_to_internal_mappings: cef to internal mappings list
+                unique_ids: list of unique ids for each chunk
+                field_mapping_name: set to cypienta_cef for default
+            Returns:
+                list of chunks to process
+            '''
+            global S3_CLIENT
+            global TEMP_SKIPPED_EVENTS_FILENAME
+            global NODE_FEATURE_EXISTS_IN_REQUEST
+            global TEMP_NODE_FEATURE_INPUT_FILENAME
+            global TEMP_NODE_FEATURE_ORIGINAL_INPUT_FILENAME
+            global TEMP_USER_NODE_FEATURE_FILE
+            global USER_NODE_FEATURE_EXISTS
+            global TEMP_PIPELINE_INPUT
+            func = "insert_event_sql"
+
+            user_node_feature_json = None
+            if USER_NODE_FEATURE_EXISTS:
+                user_node_feature_json = json.load(open(TEMP_USER_NODE_FEATURE_FILE, "r"))
+                user_node_feature_json = convert_list_to_map(user_node_feature_json)
+
+            node_feature = {}
+            skipped_event_size = 0
+
+            tranformed_events = []
+            skipped_events = []
+
+            skip_input = False
+
+            print(f"{func}: Read cef mapped chunk events")
+            events = json.load(open(TEMP_PIPELINE_INPUT, "r"))
+
+            print(f"{func}: Transform cef mapped chunk events")
+            for event in events:
+                if field_mapping_name == "cypienta_cef":
+                    tranformed_event, event_node_feature = cypienta_map_cef_to_internal(event, cef_to_internal_mappings,
+                                                                                        user_node_feature_json)
+                else:
+                    tranformed_event, event_node_feature = map_cef_to_internal(event, cef_to_internal_mappings,
+                                                                               user_node_feature_json)
+
+                # gather skipped events
+                if tranformed_event is None:
+                    skipped_events.append(event)
+                    continue
+
+                # skip insert to table for now
+
+                tranformed_events.append(tranformed_event)
+
+                # update node feature
+                for key, value in event_node_feature.items():
+                    if key in node_feature:
+                        # if its existing node, update node features
+                        node_feature[key].update(value)
+                    else:
+                        # if its new node. get node features
+                        node_feature[key] = value
+
+            if len(skipped_events) > 0:
+                print(f"{func}: Save skipped events")
+                json.dump(skipped_events, open(TEMP_SKIPPED_EVENTS_FILENAME, "w"))
+
+                skipped_event_size += len(skipped_events)
+
+                print(f"{func}: Upload skipped events to S3")
+                skipped_chunk_object_key = f"skipped_events/{field_mapping_name}/{upload_filename}.json"
+                try:
+                    S3_CLIENT.upload_file(TEMP_SKIPPED_EVENTS_FILENAME, bucket, skipped_chunk_object_key)
+                except Exception as e:
+                    print(f"{func}: Failed to save file to S3: {bucket}/{skipped_chunk_object_key}")
+                    print(e)
+
+            if len(tranformed_events) > 0:
+                print(f"{func}: save transformed cef mapped chunk events")
+
+                # Sort the list by the "time" field
+                tranformed_events = sorted(tranformed_events, key=lambda x: x["time"])
+
+                json.dump(tranformed_events, open(TEMP_PIPELINE_INPUT, "w"))
+                skip_input = False
+
+            else:
+                print(f"{func}: No events in transformed events, skip batch")
+                skip_input = True
+
+            try:
+                del events
+                del tranformed_events
+                del skipped_events
+                gc.collect()
+            except Exception as e:
+                print(f"{func}: Failed to clear local variables. Continue anyways.")
+
+            # save node features
+            if node_feature.keys():
+                print(f"{func}: Save node features")
+                NODE_FEATURE_EXISTS_IN_REQUEST = True
+                json.dump(node_feature, open(TEMP_NODE_FEATURE_INPUT_FILENAME, "w"))
+                json.dump(node_feature, open(TEMP_NODE_FEATURE_ORIGINAL_INPUT_FILENAME, "w"))
+
+            return skip_input, skipped_event_size
+
+
+        def cypienta_map_cef_to_internal(event, cef_to_internal_mappings, user_node_feature_json=None):
+            '''
+            Map cef fields to internal
+            Args:
+                event: event from chunk of input
+                cef_to_internal_mappings: cef to internal mappings list
+            Returns:
+                tranformed event mapped from cef to internal, cef mapped keys to internal event, event_node_feature
+            '''
+
+            self_loop = None
+            self_loop_key = None
+
+            transformed_event = {
+                "id": "",
+                "src": "",
+                "dst": "",
+                "time": "",
+                "name": "",
+                "other_attributes_dict": {}
+            }
+
+            other_attrs = {}
+            event_node_feature = {}
+
+            cef_mapped_keys_to_event = {
+                "time": "",
+                "src": "",
+                "dst": "",
+                "name": ""
+            }
+
+            for mapping in cef_to_internal_mappings:
+                src_field = mapping["source_field"]
+                dst_field = mapping["dest_field"]
+                if src_field not in event:
+                    continue
+                src_field_value = event[src_field]
+                if src_field_value and src_field_value != "":
+                    if dst_field in ["id"]:
+                        transformed_event["id"] = str(src_field_value)
+                    elif dst_field in ["dst"]:
+                        transformed_event["dst"] = src_field_value
+                        cef_mapped_keys_to_event["dst"] = src_field
+                    elif dst_field in ["src"]:
+                        transformed_event["src"] = src_field_value
+                        cef_mapped_keys_to_event["src"] = src_field
+                    elif dst_field in ["time"]:
+                        transformed_event["time"] = src_field_value
+                        cef_mapped_keys_to_event["time"] = src_field
+                    elif dst_field in ["name"]:
+                        transformed_event["name"] = str(src_field_value)
+                        cef_mapped_keys_to_event["name"] = src_field
+
+                    elif dst_field in ["self_loop_src (when both dst & src r empty) "]:
+                        self_loop = src_field_value
+                        self_loop_key = src_field
+
+                    elif dst_field in ["event_ftr_IMPRTNT_priority"]:
+                        try:
+                            src_field_value = int(src_field_value)
+                            other_attrs["priority"] = src_field_value
+                        except Exception as e:
+                            pass
+                    elif dst_field in ["src_port", "dst_port"]:
+                        try:
+                            src_field_value = int(src_field_value)
+                            other_attrs["port"] = src_field_value
+                        except Exception as e:
+                            pass
+                    elif dst_field in ["event_ftr", "event_ftr_IMPRTNT"]:
+                        other_attrs[src_field] = src_field_value
+
+            transformed_event["other_attributes_dict"].update(other_attrs)
+
+            for mapping in cef_to_internal_mappings:
+                src_field = mapping["source_field"]
+                dst_field = mapping["dest_field"]
+
+                if dst_field not in ["dst_node_ftr", "src_node_ftr", "self_loop_node_ftr"]:
+                    continue
+
+                if src_field not in event:
+                    continue
+
+                src_field_value = event[src_field]
+                if src_field_value != "":
+                    transformed_event["other_attributes_dict"][src_field] = src_field_value
+
+            # if none of the src, dst is present, then use self loop
+            if transformed_event["src"] and not transformed_event["dst"]:
+                transformed_event["dst"] = transformed_event["src"]
+                cef_mapped_keys_to_event["dst"] = cef_mapped_keys_to_event["src"]
+
+            elif not transformed_event["src"] and transformed_event["dst"]:
+                transformed_event["src"] = transformed_event["dst"]
+                cef_mapped_keys_to_event["src"] = cef_mapped_keys_to_event["dst"]
+
+            elif not transformed_event["src"] and not transformed_event["dst"]:
+                # self loop get the cef field for the self loop
+                if self_loop is not None:
+                    transformed_event["src"] = self_loop
+                    transformed_event["dst"] = self_loop
+                    cef_mapped_keys_to_event["src"] = self_loop_key
+                    cef_mapped_keys_to_event["dst"] = self_loop_key
+                else:
+                    # if self loop is absent too, then required fields src, dest cannot be mapped. skip event
+                    return None, event_node_feature
+
+            # if required fields are empty, skip event:
+            if not transformed_event["time"]:
+                return None, event_node_feature
+
+            # get name
+
+            if not transformed_event["name"]:
+                transformed_event["name"] = get_3_words(event)
+
+            # convert to unix timestamp
+            unix_timestamp = convert_to_unix_timestamp(transformed_event["time"])
+            if unix_timestamp is None:
+                return None, event_node_feature
+            transformed_event["time"] = unix_timestamp
+
+            self_loop_exists = (transformed_event["src"] == transformed_event["dst"])
+
+            # get tech
+            tech_list = get_tech(event)
+            if tech_list:
+                transformed_event["tech"] = tech_list
+
+            # create node feature
+
+            event_node_feature[transformed_event["src"]] = {}
+            event_node_feature[transformed_event["dst"]] = {}
+
+            for mapping in cef_to_internal_mappings:
+                src_field = mapping["source_field"]
+                dst_field = mapping["dest_field"]
+
+                if dst_field not in ["dst_node_ftr", "src_node_ftr", "self_loop_node_ftr"]:
+                    continue
+
+                if src_field not in event:
+                    continue
+
+                src_field_value = event[src_field]
+                if src_field_value != "":
+                    if dst_field in ["dst_node_ftr"]:
+                        if user_node_feature_json is not None and transformed_event["dst"] in user_node_feature_json and src_field in user_node_feature_json[transformed_event["dst"]]:
+                            src_field_value = user_node_feature_json[transformed_event["dst"]][src_field]
+                        event_node_feature[transformed_event["dst"]][src_field] = src_field_value
+                    elif dst_field in ["src_node_ftr"]:
+                        if user_node_feature_json is not None and transformed_event["src"] in user_node_feature_json and src_field in user_node_feature_json[transformed_event["src"]]:
+                            src_field_value = user_node_feature_json[transformed_event["src"]][src_field]
+                        event_node_feature[transformed_event["src"]][src_field] = src_field_value
+                    elif dst_field in ["self_loop_node_ftr"]:
+                        if self_loop_exists:
+                            if user_node_feature_json is not None and transformed_event["src"] in user_node_feature_json and src_field in user_node_feature_json[transformed_event["src"]]:
+                                src_field_value = user_node_feature_json[transformed_event["src"]][src_field]
+                            event_node_feature[transformed_event["src"]][src_field] = src_field_value
+
+            # get id
+            source_type = None
+            source = None
+            event_time = None
+
+            if '_sourceType' in event:
+                source_type = str(event['_sourceType'])
+                source_type = source_type.replace("'", "\"")
+                source_type = source_type.replace("\\", "\\\\")
+
+            if '_source' in event:
+                source = str(event['_source'])
+                source = source.replace("'", "\"")
+                source = source.replace("\\", "\\\\")
+
+            if '_time' in event:
+                event_time = str(event["_time"])
+
+            # event_uuid = str(uuid.uuid4())
+            event_uuid = str(event["_event_id"])
+
+            transformed_event["id"] = f'''"{transformed_event['src']}" "{transformed_event['dst']}"'''
+
+            if event_time and event_time != "":
+                transformed_event["id"] = f'''{transformed_event["id"]} _time="{event_time}"'''
+
+            if source and source != "":
+                transformed_event["id"] = f'''{transformed_event["id"]} source="{source}"'''
+
+            if source_type and source_type != "":
+                transformed_event["id"] = f'''{transformed_event["id"]} sourcetype="{source_type}"'''
+
+            transformed_event["id"] = f'''{transformed_event["id"]} id:{event_uuid}'''
+
+            return transformed_event, event_node_feature
+
+
+        def map_cef_to_internal(event, cef_to_internal_mappings, user_node_feature_json=None):
+            '''
+            Map cef fields to internal
+            Args:
+                event: event from chunk of input
+                cef_to_internal_mappings: cef to internal mappings list
+            Returns:
+                tranformed event mapped from cef to internal, cef mapped keys to internal event, event_node_feature
+            '''
+
+            transformed_event = {
+                "id": "",
+                "src": "",
+                "dst": "",
+                "time": "",
+                "name": "",
+                "other_attributes_dict": {}
+            }
+
+            other_attrs = {}
+            event_node_feature = {}
+
+            cef_mapped_keys_to_event = {
+                "time": "",
+                "src": "",
+                "dst": "",
+                "name": ""
+            }
+
+            for mapping in cef_to_internal_mappings:
+                src_field = mapping["source_field"]
+                dst_field = mapping["dest_field"]
+                if src_field not in event:
+                    continue
+                src_field_value = event[src_field]
+                if src_field_value and src_field_value != "":
+                    if dst_field in ["id"]:
+                        transformed_event["id"] = str(src_field_value)
+                    elif dst_field in ["dst"]:
+                        transformed_event["dst"] = src_field_value
+                        cef_mapped_keys_to_event["dst"] = src_field
+                    elif dst_field in ["src"]:
+                        transformed_event["src"] = src_field_value
+                        cef_mapped_keys_to_event["src"] = src_field
+                    elif dst_field in ["time"]:
+                        transformed_event["time"] = src_field_value
+                        cef_mapped_keys_to_event["time"] = src_field
+                    elif dst_field in ["name"]:
+                        transformed_event["name"] = str(src_field_value)
+                        cef_mapped_keys_to_event["name"] = src_field
+
+                    elif dst_field in ["event_feature"]:
+                        other_attrs[src_field] = src_field_value
+
+            transformed_event["other_attributes_dict"].update(other_attrs)
+
+            # if none of the src, dst is present, then use self loop
+            if transformed_event["src"] and not transformed_event["dst"]:
+                transformed_event["dst"] = transformed_event["src"]
+                cef_mapped_keys_to_event["dst"] = cef_mapped_keys_to_event["src"]
+
+            elif not transformed_event["src"] and transformed_event["dst"]:
+                transformed_event["src"] = transformed_event["dst"]
+                cef_mapped_keys_to_event["src"] = cef_mapped_keys_to_event["dst"]
+
+            elif not transformed_event["src"] and not transformed_event["dst"]:
+                return None, event_node_feature
+
+            # if required fields are empty, skip event:
+            if not transformed_event["time"]:
+                return None, event_node_feature
+
+            # get name
+
+            if not transformed_event["name"]:
+                transformed_event["name"] = get_3_words(event)
+
+            # convert to unix timestamp
+            unix_timestamp = convert_to_unix_timestamp(transformed_event["time"])
+            if unix_timestamp is None:
+                return None, event_node_feature
+            transformed_event["time"] = unix_timestamp
+
+            # get tech
+            tech_list = get_tech(event)
+            if tech_list:
+                transformed_event["tech"] = tech_list
+
+            # create node feature
+
+            event_node_feature[transformed_event["src"]] = {}
+            event_node_feature[transformed_event["dst"]] = {}
+
+            for mapping in cef_to_internal_mappings:
+                src_field = mapping["source_field"]
+                dst_field = mapping["dest_field"]
+
+                if dst_field not in ["node_feature"]:
+                    continue
+
+                if src_field not in event:
+                    continue
+
+                src_field_value = event[src_field]
+                if src_field_value and src_field_value != "":
+                    node_association = mapping["association"]
+
+                    if node_association == "src":
+                        if user_node_feature_json is not None and transformed_event["src"] in user_node_feature_json and src_field in user_node_feature_json[transformed_event["src"]]:
+                            src_field_value = user_node_feature_json[transformed_event["src"]][src_field]
+                        event_node_feature[transformed_event["src"]][src_field] = src_field_value
+                    elif node_association == "dst":
+                        if user_node_feature_json is not None and transformed_event["dst"] in user_node_feature_json and src_field in user_node_feature_json[transformed_event["dst"]]:
+                            src_field_value = user_node_feature_json[transformed_event["dst"]][src_field]
+                        event_node_feature[transformed_event["dst"]][src_field] = src_field_value
+                    elif node_association == "both":
+                        if user_node_feature_json is not None and transformed_event["src"] in user_node_feature_json and src_field in user_node_feature_json[transformed_event["src"]]:
+                            src_field_value = user_node_feature_json[transformed_event["src"]][src_field]
+                        event_node_feature[transformed_event["src"]][src_field] = src_field_value
+                        event_node_feature[transformed_event["dst"]][src_field] = src_field_value
+
+            # event_uuid = str(uuid.uuid4())
+            event_uuid = str(event["_event_id"])
+
+            transformed_event["id"] = f'''"{transformed_event['src']}" "{transformed_event['dst']}" "{transformed_event["id"]}"'''
+
+            transformed_event["id"] = f'''{transformed_event["id"]} id:{event_uuid}'''
+
+            return transformed_event, event_node_feature
 
 
         def process_csv():
@@ -3478,10 +4053,25 @@ Resources:
             global TEMP_PIPELINE_INPUT
             func = "process_json"
 
-            user_data = json.load(open(TEMP_INPUT_FILENAME, "r"))
+            extension = os.path.splitext(TEMP_INPUT_FILENAME)[-1]
+            if extension == ".jsonl":
+                convert_json_lines_to_json_list()
 
-            for alert in user_data:
-                alert = flatten_json(alert)
+            try:
+                user_data = json.load(open(TEMP_INPUT_FILENAME, "r"))
+                if isinstance(user_data, dict):
+                    user_data = [user_data]
+            except Exception as e:
+                print(f"{func}: Error while loading file as json: {e}")
+
+                print(f"{func}: Trying to load file as json lines")
+
+                convert_json_lines_to_json_list()
+
+                user_data = json.load(open(TEMP_INPUT_FILENAME, "r"))
+
+            for i in range(len(user_data)):
+                user_data[i] = flatten_json(user_data[i])
 
             json.dump(user_data, open(TEMP_PIPELINE_INPUT, "w"))
 
@@ -3506,8 +4096,8 @@ Resources:
             if user_data is None:
                 raise ValueError("No list of dictionaries found in the JSON data.")
 
-            for alert in user_data:
-                alert = flatten_json(alert)
+            for i in range(len(user_data)):
+                user_data[i] = flatten_json(user_data[i])
 
             json.dump(user_data, open(TEMP_PIPELINE_INPUT, "w"))
 
@@ -3584,6 +4174,112 @@ Resources:
                 return False
 
 
+        def get_3_words(dict_obj):
+            """
+            Extracts keys and values from a dictionary based on having three words and returns a concatenated string of values.
+
+            Parameters:
+            dict_obj (dict): The input dictionary containing key-value pairs to be processed.
+            black_list (list): A list of keys to be ignored during processing.
+            english_words (list): A list of valid English words to be used for counting.
+
+            Returns:
+            str: A concatenated string of values from `dict_obj` that meet the specified conditions.
+            """
+            global BLACK_LIST_KEYS
+            global ENGLISH_WORDS
+
+            keys = []
+
+            output_str = ""
+            for key in dict_obj.keys():
+                if key in BLACK_LIST_KEYS:
+                    continue
+
+                target_str = str(dict_obj[key]).lower()
+
+                if len(target_str) < 4:
+                    continue
+
+                # Split the sentence into words
+                words = re.findall(r'(?<=\s)\w+|\w+(?=\s)|^\w+|\w+$', target_str)
+
+                # Count English words
+                english_word_count = sum(1 for word in words if word in ENGLISH_WORDS)
+
+                if english_word_count >= 3:
+                    if output_str:
+                        output_str += ' '
+                    output_str += f'{target_str}'
+                    keys.append([key, dict_obj[key]])
+            return output_str
+
+
+        def get_tech(event):
+            """
+            Extracts tech using regex if present in raw data
+
+            Args:
+                event: The input dictionary containing key-value pairs to be processed.
+
+            Returns: List of strings of tech
+            """
+
+            tech_list = []
+            for key in event.keys():
+
+                if not isinstance(event[key], str):
+                    continue
+
+                # Find tech in value
+                words = re.findall(r'T[0-9]{4}|t[0-9]{4}', event[key])
+
+                tech_list.extend(words)
+
+            tech_list = [f"T{tech[1:]}" for tech in tech_list]
+            tech_list = list(set(tech_list))
+            return tech_list
+
+
+        def create_event_id():
+            '''
+            Create event id for user input
+            '''
+            global TEMP_RAW_JSON_INPUT
+            func = "create_event_id"
+
+            input_json = json.load(open(TEMP_RAW_JSON_INPUT, "r"))
+            for alert in input_json:
+                alert["_event_id"] = str(uuid.uuid4())
+            json.dump(input_json, open(TEMP_RAW_JSON_INPUT, "w"))
+            json.dump(input_json, open(TEMP_PIPELINE_INPUT, "w"))
+
+
+        def convert_list_to_map(user_node_feature_json):
+            '''
+            Convert list of list to map
+            '''
+            func = "convert_list_to_map"
+
+            # Initialize the dictionary
+            result = {}
+
+            headers = user_node_feature_json[0]
+
+            # Process each row (starting from the second row)
+            for row in user_node_feature_json[1:]:
+                key = row[0]
+                values = {}
+                for i in range(1, len(headers)):
+                    if i >= len(row):
+                        values[headers[i]] = ""
+                    else:
+                        values[headers[i]] = row[i]
+                result[key] = values
+
+            return result
+
+
         def flatten_json(y, separator='.', prefix=''):
             """
             Flattens a nested JSON object.
@@ -3631,6 +4327,24 @@ Resources:
             return None
 
 
+        def convert_json_lines_to_json_list():
+            '''
+            Convert json lines to json list 
+            '''
+            global TEMP_INPUT_FILENAME
+
+            new_json = []
+            with open(TEMP_INPUT_FILENAME, 'r') as f:
+                for line in f:
+                    try:
+                        json_data = json.loads(line)
+                        new_json.append(json_data)
+                    except Exception as e:
+                        pass
+
+            json.dump(new_json, open(TEMP_INPUT_FILENAME, 'w'))
+
+
         def convert_xml_to_json(xml_file_path, json_file_path):
             """
             Converts an XML file to a JSON file.
@@ -3656,6 +4370,1720 @@ Resources:
             except Exception as e:
                 print(f"Error: {e}")
                 raise e
+
+
+        def convert_to_unix_timestamp(time_str):
+            """
+            Convert any date/time format to a UNIX timestamp.
+            Args:
+                time_str: The date/time string or UNIX timestamp to convert.
+            Returns
+                return: The UNIX timestamp.
+            """
+            try:
+                # Check if the input is already a UNIX timestamp
+                if isinstance(time_str, (int, float)):
+                    return time_str
+
+                # Attempt to convert string to a float or int
+                try:
+                    timestamp = float(time_str)
+                    return timestamp
+                except ValueError:
+                    pass
+
+                # Parse the date/time string into a datetime object
+                dt = parser.parse(time_str)
+                # Convert the datetime object to a UNIX timestamp
+                unix_timestamp = int(dt.timestamp())
+                return unix_timestamp
+            except Exception as e:
+                print(f"Error: {e}")
+                return None
+
+
+        def cypienta_get_cef_to_internal_mappings():
+            '''
+            Create cef to internal mappings dataframe
+            Returns:
+                dataframe of cef to internal mappings
+            '''
+            cef_to_internal_mappings = [
+                {
+                    "source_field": "accessGroup",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "accountDomain",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "accountId",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "accountName",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "clientDomain",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "clientLogonId",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "clientMachineName",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "clientUserName",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "deviceAddress",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "deviceAddress",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "deviceAddressIPv6",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "deviceCustomString1",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "deviceHostName",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "deviceNtHost",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "domain",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "group",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "groupDomain",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "groupTypeChange",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "hostname",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "logonAccount",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "logonAccount",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "memberDn",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "memberId",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "memberId",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "memberName",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "memberNtDomain",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "primaryDomain",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "primaryUserName",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "subjectAccountDomain",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "subjectAccountName",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "subjectDomainName",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "subjectLogonId",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "subjectLogonId",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "subjectSecurityId",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "subjectUserName",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "suser",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "user",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "userGroup",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "userGroupId",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "userId",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "userId",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "userName",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "userName",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "userName",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "userType",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "workstation",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "workstationName",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "workstationName",
+                    "dest_field": "self_loop_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "acl",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "act",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "act",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "attachDisposition",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "attachFileName",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "attachSize",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "attachSizeDecoded",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "attachTransferEncoding",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "attachType",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "authMethod",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "awsAccountId",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "body",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "bucket",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "bytes",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "bytesIn",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "bytesOut",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "callerComputerName",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "callerDomain",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "callerLogonId",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "callerMachineName",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "callerUserName",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "cat",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "cat",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "categoryString",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "cd",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "changeClass",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "changeDescription",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "changeType",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "changeType",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "ciscoAsaMessageId",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "ciscoAsaUser",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "ciscoAsaVendorAction",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "cn1",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "cn2",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "cn3",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "cn4",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "cn5",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "cn6",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "command",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "commProto",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "content",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "count",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "creatorProcessName",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "cs1",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "cs1Label",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "cs2",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "cs3",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "cs4",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "cs5",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "cs6",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "deviceDirection",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "deviceProduct",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "deviceProduct",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "deviceReceiptTime",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "deviceType",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "deviceVendor",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "deviceVendor",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "deviceVersion",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "deviceVersion",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "duration",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "durationDay",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "durationHour",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "durationMinute",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "durationSecond",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "errorCode",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "eventCode",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "eventDay",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "eventHour",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "eventId",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "eventMinute",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "eventMonth",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "eventSecond",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "eventSubtype",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "eventType",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "eventType",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "eventType",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "eventTypeColor",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "eventWeekDay",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "eventYear",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "eventZone",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "exitStatus",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "fileName",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "fileName",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "filePath",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "filePath",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "fileSize",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "fileType",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "flowId",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "fragmentCount",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "hashCodes",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "icmpCode",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "icmpType",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "id",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "idsType",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "imageFileName",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "index",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "indexTime",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "initialRtt",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "interfaceId",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "keywords",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "kv",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "laction",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "lineCount",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "logLevel",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "logName",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "logonId",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "logonType",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "logStatus",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "messageId",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "messageType",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "name",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "name",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "newAccountName",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "newDomain",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "newProcessName",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "object",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "objectAttrs",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "objectCategory",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "objectId",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "objectName",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "objectType",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "opCode",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "outcome",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "packets",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "packetsIn",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "packetsOut",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "parentProcess",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "parentProcessId",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "parentProcessName",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "parentProcessPath",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "preMsg",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "privilegeList",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "product",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "punct",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "query",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "query",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "queryType",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "raw",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "recordNumber",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "region",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "registryPath",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "registryValueName",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "registryValueType",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "replyCode",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "replyCodeId",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "requestClientApplication",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "requestMethod",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "requestURL",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "responseTime",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "rule",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "ruleId",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "securityId",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "serial",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "service",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "serviceId",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "serviceName",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "sessionId",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "si",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "signatureId",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "source",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "sourceContent",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "sourceName",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "sourceNetworkAddress",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "sourceSgInfo",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "splunkServer",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "splunkServerGroup",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "sslIsValid",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "status",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "subject",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "subSecond",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "suppliedRealmName",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "tag",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "tagAction",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "tagApp",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "tagEventType",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "tagObjectCategory",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "taskCategory",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "timeTaken",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "tokenElevationType",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "tokenElevationType",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "tos",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "totalBytes",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "totalPacketsIn",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "totalPacketsOut",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "totalResponseTime",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "transactionId",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "transport",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "ttl",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "type",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "type",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "valuesFlowId",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "version",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "vpcFlowAction",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "winAction",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "winSecurityCategory",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "winStatus",
+                    "dest_field": "event_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "destinationAddress",
+                    "dest_field": "dst",
+                    "priority": 6.0
+                },
+                {
+                    "source_field": "destinationNtHost",
+                    "dest_field": "dst",
+                    "priority": 6.0
+                },
+                {
+                    "source_field": "destinationAddress",
+                    "dest_field": "dst",
+                    "priority": 5.0
+                },
+                {
+                    "source_field": "destinationAddressIPv6",
+                    "dest_field": "dst",
+                    "priority": 4.0
+                },
+                {
+                    "source_field": "destinationHostName",
+                    "dest_field": "dst",
+                    "priority": 3.0
+                },
+                {
+                    "source_field": "destinationTranslatedAddress",
+                    "dest_field": "dst",
+                    "priority": 1.0
+                },
+                {
+                    "source_field": "destContent",
+                    "dest_field": "dst_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "destHost",
+                    "dest_field": "dst_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "destinationInterface",
+                    "dest_field": "dst_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "destinationInterfaceId",
+                    "dest_field": "dst_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "destinationMacAddress",
+                    "dest_field": "dst_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "destinationNtDomain",
+                    "dest_field": "dst_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "targetAccountId",
+                    "dest_field": "dst_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "destinationPriority",
+                    "dest_field": "dst_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "targetAccountName",
+                    "dest_field": "dst_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "destinationZone",
+                    "dest_field": "dst_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "destSgInfo",
+                    "dest_field": "dst_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "duser",
+                    "dest_field": "dst_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "targetDomain",
+                    "dest_field": "dst_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "targetDomainName",
+                    "dest_field": "dst_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "targetProcessName",
+                    "dest_field": "dst_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "targetServerName",
+                    "dest_field": "dst_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "targetServerName",
+                    "dest_field": "dst_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "targetUserName",
+                    "dest_field": "dst_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "targetUserName",
+                    "dest_field": "dst_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "description",
+                    "dest_field": "name",
+                    "priority": 5.0
+                },
+                {
+                    "source_field": "name",
+                    "dest_field": "name",
+                    "priority": 4.0
+                },
+                {
+                    "source_field": "ruleName",
+                    "dest_field": "name",
+                    "priority": 3.0
+                },
+                {
+                    "source_field": "description",
+                    "dest_field": "name",
+                    "priority": 2.0
+                },
+                {
+                    "source_field": "msg",
+                    "dest_field": "name",
+                    "priority": 2.0
+                },
+                {
+                    "source_field": "message",
+                    "dest_field": "name",
+                    "priority": 1.0
+                },
+                {
+                    "source_field": "destPublicPort",
+                    "dest_field": "dst_port",
+                    "priority": 3.0
+                },
+                {
+                    "source_field": "destinationTranslatedPort",
+                    "dest_field": "dst_port",
+                    "priority": 2.0
+                },
+                {
+                    "source_field": "destinationPort",
+                    "dest_field": "dst_port",
+                    "priority": 1.0
+                },
+                {
+                    "source_field": "process",
+                    "dest_field": "event_ftr_IMPRTNT",
+                    "priority": None
+                },
+                {
+                    "source_field": "processCommandLine",
+                    "dest_field": "event_ftr_IMPRTNT",
+                    "priority": None
+                },
+                {
+                    "source_field": "processExec",
+                    "dest_field": "event_ftr_IMPRTNT",
+                    "priority": None
+                },
+                {
+                    "source_field": "processId",
+                    "dest_field": "event_ftr_IMPRTNT",
+                    "priority": None
+                },
+                {
+                    "source_field": "processId",
+                    "dest_field": "event_ftr_IMPRTNT",
+                    "priority": None
+                },
+                {
+                    "source_field": "processName",
+                    "dest_field": "event_ftr_IMPRTNT",
+                    "priority": None
+                },
+                {
+                    "source_field": "processName",
+                    "dest_field": "event_ftr_IMPRTNT",
+                    "priority": None
+                },
+                {
+                    "source_field": "processPath",
+                    "dest_field": "event_ftr_IMPRTNT",
+                    "priority": None
+                },
+                {
+                    "source_field": "proto",
+                    "dest_field": "event_ftr_IMPRTNT",
+                    "priority": None
+                },
+                {
+                    "source_field": "protoCode",
+                    "dest_field": "event_ftr_IMPRTNT",
+                    "priority": None
+                },
+                {
+                    "source_field": "protoFullName",
+                    "dest_field": "event_ftr_IMPRTNT",
+                    "priority": None
+                },
+                {
+                    "source_field": "protoId",
+                    "dest_field": "event_ftr_IMPRTNT",
+                    "priority": None
+                },
+                {
+                    "source_field": "protoStack",
+                    "dest_field": "event_ftr_IMPRTNT",
+                    "priority": None
+                },
+                {
+                    "source_field": "protoVersion",
+                    "dest_field": "event_ftr_IMPRTNT",
+                    "priority": None
+                },
+                {
+                    "source_field": "sourceType",
+                    "dest_field": "event_ftr_IMPRTNT",
+                    "priority": None
+                },
+                {
+                    "source_field": "sourceType",
+                    "dest_field": "event_ftr_IMPRTNT",
+                    "priority": None
+                },
+                {
+                    "source_field": "vendor",
+                    "dest_field": "event_ftr_IMPRTNT",
+                    "priority": None
+                },
+                {
+                    "source_field": "vendorAccount",
+                    "dest_field": "event_ftr_IMPRTNT",
+                    "priority": None
+                },
+                {
+                    "source_field": "vendorAction",
+                    "dest_field": "event_ftr_IMPRTNT",
+                    "priority": None
+                },
+                {
+                    "source_field": "vendorClass",
+                    "dest_field": "event_ftr_IMPRTNT",
+                    "priority": None
+                },
+                {
+                    "source_field": "vendorDefinition",
+                    "dest_field": "event_ftr_IMPRTNT",
+                    "priority": None
+                },
+                {
+                    "source_field": "vendorPrivilege",
+                    "dest_field": "event_ftr_IMPRTNT",
+                    "priority": None
+                },
+                {
+                    "source_field": "vendorSeverity",
+                    "dest_field": "event_ftr_IMPRTNT",
+                    "priority": None
+                },
+                {
+                    "source_field": "severity",
+                    "dest_field": "event_ftr_IMPRTNT_priority",
+                    "priority": None
+                },
+                {
+                    "source_field": "severityId",
+                    "dest_field": "event_ftr_IMPRTNT_priority",
+                    "priority": None
+                },
+                {
+                    "source_field": "severityLevel",
+                    "dest_field": "event_ftr_IMPRTNT_priority",
+                    "priority": None
+                },
+                {
+                    "source_field": "computerName",
+                    "dest_field": "self_loop_src (when both dst & src r empty) ",
+                    "priority": 6.0
+                },
+                {
+                    "source_field": "hostAddr",
+                    "dest_field": "self_loop_src (when both dst & src r empty) ",
+                    "priority": 5.0
+                },
+                {
+                    "source_field": "assignedIp",
+                    "dest_field": "self_loop_src (when both dst & src r empty) ",
+                    "priority": 4.0
+                },
+                {
+                    "source_field": "clientAddress",
+                    "dest_field": "self_loop_src (when both dst & src r empty) ",
+                    "priority": 3.0
+                },
+                {
+                    "source_field": "ip",
+                    "dest_field": "self_loop_src (when both dst & src r empty) ",
+                    "priority": 2.0
+                },
+                {
+                    "source_field": "ipAddress",
+                    "dest_field": "self_loop_src (when both dst & src r empty) ",
+                    "priority": 1.0
+                },
+                {
+                    "source_field": "sourceAddressIPv6",
+                    "dest_field": "src",
+                    "priority": 6.0
+                },
+                {
+                    "source_field": "sourceTranslatedAddress",
+                    "dest_field": "src",
+                    "priority": 5.0
+                },
+                {
+                    "source_field": "sourceAddress",
+                    "dest_field": "src",
+                    "priority": 4.0
+                },
+                {
+                    "source_field": "sourceAddress",
+                    "dest_field": "src",
+                    "priority": 3.0
+                },
+                {
+                    "source_field": "sourceNtHost",
+                    "dest_field": "src",
+                    "priority": 2.0
+                },
+                {
+                    "source_field": "sourceHostName",
+                    "dest_field": "src",
+                    "priority": 1.0
+                },
+                {
+                    "source_field": "sourceHost",
+                    "dest_field": "src_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "sourceInterface",
+                    "dest_field": "src_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "sourceInterfaceId",
+                    "dest_field": "src_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "sourceMacAddress",
+                    "dest_field": "src_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "sourceNtDomain",
+                    "dest_field": "src_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "sourcePriority",
+                    "dest_field": "src_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "sourceUserName",
+                    "dest_field": "src_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "sourceWorkstation",
+                    "dest_field": "src_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "sourceZone",
+                    "dest_field": "src_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "suser",
+                    "dest_field": "src_node_ftr",
+                    "priority": None
+                },
+                {
+                    "source_field": "sourcePublicPort",
+                    "dest_field": "src_port",
+                    "priority": 3.0
+                },
+                {
+                    "source_field": "sourceTranslatedPort",
+                    "dest_field": "src_port",
+                    "priority": 2.0
+                },
+                {
+                    "source_field": "sourcePort",
+                    "dest_field": "src_port",
+                    "priority": 1.0
+                },
+                {
+                    "source_field": "endTime",
+                    "dest_field": "time",
+                    "priority": 5.0
+                },
+                {
+                    "source_field": "endTime",
+                    "dest_field": "time",
+                    "priority": 4.0
+                },
+                {
+                    "source_field": "startTime",
+                    "dest_field": "time",
+                    "priority": 3.0
+                },
+                {
+                    "source_field": "timestamp",
+                    "dest_field": "time",
+                    "priority": 2.0
+                },
+                {
+                    "source_field": "time",
+                    "dest_field": "time",
+                    "priority": 1.0
+                }
+            ]
+
+            # cef_to_internal_mappings_df = pd.DataFrame(cef_to_internal_mappings)
+
+            return cef_to_internal_mappings
 
 
         def clear_temp_dir():
@@ -4716,9 +7144,9 @@ Resources:
         Variables:
           bucket: !Ref Bucket
           ui_lb_url: !GetAtt UILoadBalancer.DNSName
-          ui_password: !Ref SuperuserPassword
-          ui_username: !Ref SuperuserUsername
-          db_connection_string: !Sub postgresql://${DbUsername}:${DbPassword}@${DbLoadBalancer.DNSName}:5432/postgres
+          ui_password: !FindInMap [UI, ServiceWorkerPassword, Value]
+          ui_username: !FindInMap [UI, ServiceWorkerUsername, Value]
+          db_connection_string: !Sub postgresql://${DbUsername}:${DbPassword}@${DbLoadBalancer.DNSName}:5432/lambda
       Events:
         MyLogGroupTrigger:
           Type: CloudWatchLogs
@@ -4727,7 +7155,6 @@ Resources:
             FilterPattern: Save campaign json
   saveFeedbackLogGroup:
     Type: AWS::Logs::LogGroup
-    DeletionPolicy: Retain
     Properties:
       LogGroupName: !Sub /aws/lambda/${saveFeedback}
   saveFeedbackLambdaEventInvokeConfig:
@@ -4817,7 +7244,6 @@ Resources:
     - UILoadBalancer
     Properties:
       Family: !Sub ui-task-${AWS::StackName}
-      Cpu: !Ref Cpu
       Memory: !Ref Memory
       NetworkMode: host
       RequiresCompatibilities:
@@ -4836,7 +7262,7 @@ Resources:
         Image: postgres:13-bullseye
         Cpu: 0
         PortMappings: []
-        Essential: false
+        Essential: true
         Environment:
         - Name: POSTGRES_USER
           Value: bastet
@@ -4858,7 +7284,7 @@ Resources:
         Image: redis:6.2.6-alpine
         Cpu: 0
         PortMappings: []
-        Essential: false
+        Essential: true
         LogConfiguration:
           LogDriver: awslogs
           Options:
@@ -4873,7 +7299,7 @@ Resources:
           ContainerPort: 5672
           HostPort: 5672
           Protocol: tcp
-        Essential: false
+        Essential: true
         LogConfiguration:
           LogDriver: awslogs
           Options:
@@ -4888,7 +7314,7 @@ Resources:
           ContainerPort: 8000
           HostPort: 8000
           Protocol: tcp
-        Essential: false
+        Essential: true
         Command:
         - ./entry.sh
         Environment:
@@ -4924,6 +7350,14 @@ Resources:
           Value: !Ref Bucket
         - Name: GEN_AI_MODEL
           Value: gpt-3.5-turbo
+        - Name: AIRFLOW_URL
+          Value: !Sub "http://${AirflowLoadBalancer.DNSName}:8080"
+        - Name: AIRFLOW_DAG_ID
+          Value: s3_trigger
+        - Name: AIRFLOW_USERNAME
+          Value: !Ref AirflowUsername
+        - Name: AIRFLOW_PASSWORD
+          Value: !Ref AirflowPassword
         MountPoints:
         - SourceVolume: static_volume
           ContainerPath: /code/static
@@ -4975,12 +7409,69 @@ Resources:
           Value: localhost
         - Name: POSTGRES_DB_NAME
           Value: bastet
+        - Name: AIRFLOW_URL
+          Value: !Sub "http://${AirflowLoadBalancer.DNSName}:8080"
+        - Name: AIRFLOW_DAG_ID
+          Value: s3_trigger
+        - Name: AIRFLOW_USERNAME
+          Value: !Ref AirflowUsername
+        - Name: AIRFLOW_PASSWORD
+          Value: !Ref AirflowPassword
         MountPoints:
         - SourceVolume: !Sub "${AWS::StackName}_shared_temp"
           ContainerPath: /tmp/shared
           ReadOnly: false
         DependsOn:
         - ContainerName: bastet_web
+          Condition: START
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: !Sub /ecs/${AWS::StackName}-cluster
+            awslogs-region: !Ref AWS::Region
+            awslogs-stream-prefix: ecs
+      - Name: bastet_celery_beat
+        Image: !FindInMap [Images, WebContainerImage, ImageUri]
+        Cpu: 0
+        Essential: true
+        Command:
+        - celery
+        - -A
+        - bastet
+        - beat
+        - -l
+        - info
+        Environment:
+        - Name: POSTGRES_USER
+          Value: bastet
+        - Name: DJANGO_SETTINGS_MODULE
+          Value: bastet.settings.local
+        - Name: REDIS_HOST
+          Value: localhost
+        - Name: POSTGRES_HOST
+          Value: localhost
+        - Name: POSTGRES_PASSWORD
+          Value: bastet
+        - Name: POSTGRES_PORT
+          Value: '5432'
+        - Name: RABBITMQ_HOST
+          Value: localhost
+        - Name: POSTGRES_DB_NAME
+          Value: bastet
+        - Name: AIRFLOW_URL
+          Value: !Sub "http://${AirflowLoadBalancer.DNSName}:8080"
+        - Name: AIRFLOW_DAG_ID
+          Value: s3_trigger
+        - Name: AIRFLOW_USERNAME
+          Value: !Ref AirflowUsername
+        - Name: AIRFLOW_PASSWORD
+          Value: !Ref AirflowPassword
+        MountPoints:
+        - SourceVolume: !Sub "${AWS::StackName}_shared_temp"
+          ContainerPath: /tmp/shared
+          ReadOnly: false
+        DependsOn:
+        - ContainerName: bastet_celery
           Condition: START
         LogConfiguration:
           LogDriver: awslogs
@@ -5046,7 +7537,7 @@ Resources:
     - ClusterCPAssociation
     - ECSCluster
     Properties:
-      ServiceName: !Sub ui-service-${AWS::StackName}
+      ServiceName: !Sub ui-service-${ECSCluster}
       Cluster: !Ref ECSCluster
       TaskDefinition: !GetAtt UITaskDefinition.TaskDefinitionArn
       CapacityProviderStrategy:
@@ -5229,6 +7720,167 @@ Resources:
           TargetCapacity: 100
         ManagedTerminationProtection: DISABLED
 
+  # DB restore ecs
+  DBRestoreTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub db-restore-task-${AWS::StackName}
+      Memory: !Ref Memory
+      NetworkMode: host
+      ExecutionRoleArn: !GetAtt EcsModelExecutionRole.Arn
+      TaskRoleArn: !GetAtt EcsModelExecutionRole.Arn
+      RequiresCompatibilities:
+      - EC2
+      PlacementConstraints:
+      - Type: memberOf
+        Expression: !Sub
+        - attribute:ecs.availability-zone==${AvailabilityZone}
+        - AvailabilityZone: !Select
+          - '0'
+          - Fn::GetAZs: !Ref AWS::Region
+      ContainerDefinitions:
+      - Name: lambda_db
+        Image: postgres:13-bullseye
+        PortMappings:
+        - Name: lambda_db-5432-tcp
+          ContainerPort: 5432
+          HostPort: 5432
+          Protocol: tcp
+        Essential: true
+        Environment:
+        - Name: POSTGRES_USER
+          Value: !Ref DbUsername
+        - Name: POSTGRES_PASSWORD
+          Value: !Ref DbPassword
+        - Name: POSTGRES_DB
+          Value: lambda
+        MountPoints:
+        - SourceVolume: !Sub "${AWS::StackName}_postgres_data"
+          ContainerPath: /var/lib/postgresql/data/
+          ReadOnly: false
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: !Sub /ecs/${AWS::StackName}-cluster
+            awslogs-region: !Ref AWS::Region
+            awslogs-stream-prefix: ecs
+      - Name: postgres_restore
+        Image: postgres:13-bullseye
+        Essential: true
+        EntryPoint: [sh, -c]
+        Command: [!Sub "pg_restore -U ${DbUsername} -h localhost -p 5432 -d lambda
+            -c /var/lib/postgresql/data/backup.dump"]
+        Environment:
+        - Name: POSTGRES_USER
+          Value: !Ref DbUsername
+        - Name: POSTGRES_PASSWORD
+          Value: !Ref DbPassword
+        - Name: POSTGRES_DB
+          Value: lambda
+        MountPoints:
+        - SourceVolume: !Sub "${AWS::StackName}_postgres_data"
+          ContainerPath: /var/lib/postgresql/data/
+          ReadOnly: false
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: !Sub /ecs/${AWS::StackName}-cluster
+            awslogs-region: !Ref AWS::Region
+            awslogs-stream-prefix: ecs
+        DependsOn:
+        - ContainerName: lambda_db
+          Condition: START
+      Volumes:
+      - Name: !Sub "${AWS::StackName}_postgres_data"
+        DockerVolumeConfiguration:
+          Scope: shared
+          Driver: rexray/ebs
+          Autoprovision: true
+          DriverOpts:
+            size: '10'
+            volumetype: gp2
+
+  # DB backup ecs
+  DBBackupTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub db-backup-task-${AWS::StackName}
+      Memory: !Ref Memory
+      NetworkMode: host
+      ExecutionRoleArn: !GetAtt EcsModelExecutionRole.Arn
+      TaskRoleArn: !GetAtt EcsModelExecutionRole.Arn
+      RequiresCompatibilities:
+      - EC2
+      PlacementConstraints:
+      - Type: memberOf
+        Expression: !Sub
+        - attribute:ecs.availability-zone==${AvailabilityZone}
+        - AvailabilityZone: !Select
+          - '0'
+          - Fn::GetAZs: !Ref AWS::Region
+      ContainerDefinitions:
+      - Name: lambda_db
+        Image: postgres:13-bullseye
+        PortMappings:
+        - Name: lambda_db-5432-tcp
+          ContainerPort: 5432
+          HostPort: 5432
+          Protocol: tcp
+        Essential: true
+        Environment:
+        - Name: POSTGRES_USER
+          Value: !Ref DbUsername
+        - Name: POSTGRES_PASSWORD
+          Value: !Ref DbPassword
+        - Name: POSTGRES_DB
+          Value: lambda
+        MountPoints:
+        - SourceVolume: !Sub "${AWS::StackName}_postgres_data"
+          ContainerPath: /var/lib/postgresql/data/
+          ReadOnly: false
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: !Sub /ecs/${AWS::StackName}-cluster
+            awslogs-region: !Ref AWS::Region
+            awslogs-stream-prefix: ecs
+      - Name: postgres_backup
+        Image: postgres:13-bullseye
+        Essential: true
+        EntryPoint: [sh, -c]
+        # Command: [!Sub "pg_dump -U ${DbUsername} -h localhost -p 5432 lambda > /var/lib/postgresql/data/backup.sql"]
+        Command: [!Sub "pg_dump -U ${DbUsername} -h localhost -p 5432 -Fc lambda >
+            /var/lib/postgresql/data/backup.dump"]
+        Environment:
+        - Name: POSTGRES_USER
+          Value: !Ref DbUsername
+        - Name: POSTGRES_PASSWORD
+          Value: !Ref DbPassword
+        - Name: POSTGRES_DB
+          Value: lambda
+        MountPoints:
+        - SourceVolume: !Sub "${AWS::StackName}_postgres_data"
+          ContainerPath: /var/lib/postgresql/data/
+          ReadOnly: false
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: !Sub /ecs/${AWS::StackName}-cluster
+            awslogs-region: !Ref AWS::Region
+            awslogs-stream-prefix: ecs
+        DependsOn:
+        - ContainerName: lambda_db
+          Condition: START
+      Volumes:
+      - Name: !Sub "${AWS::StackName}_postgres_data"
+        DockerVolumeConfiguration:
+          Scope: shared
+          Driver: rexray/ebs
+          Autoprovision: true
+          DriverOpts:
+            size: '10'
+            volumetype: gp2
+
   # DB ECS
   DbTaskDefinition:
     Type: AWS::ECS::TaskDefinition
@@ -5236,7 +7888,6 @@ Resources:
     - DbLoadBalancer
     Properties:
       Family: !Sub db-task-${AWS::StackName}
-      Cpu: !Ref Cpu
       Memory: !Ref Memory
       NetworkMode: host
       ExecutionRoleArn: !GetAtt EcsModelExecutionRole.Arn
@@ -5294,7 +7945,7 @@ Resources:
     - ClusterCPAssociation
     - ECSCluster
     Properties:
-      ServiceName: !Sub db-service-${AWS::StackName}
+      ServiceName: !Sub db-service-${ECSCluster}
       Cluster: !Ref ECSCluster
       TaskDefinition: !GetAtt DbTaskDefinition.TaskDefinitionArn
       CapacityProviderStrategy:
@@ -5496,7 +8147,7 @@ Resources:
         Cpu: 0
         Essential: true
         EntryPoint:
-        - main
+        - ./main
         ResourceRequirements:
         - Type: GPU
           Value: '1'
@@ -5591,10 +8242,7 @@ Resources:
         Cpu: 0
         Essential: true
         EntryPoint:
-        - main
-        ResourceRequirements:
-        - Type: GPU
-          Value: '1'
+        - ./main
         Environment:
         - Name: AWS_DEFAULT_REGION
           Value: !Ref AWS::Region
@@ -5613,7 +8261,7 @@ Resources:
     - ECSCluster
     Properties:
       LaunchTemplateData:
-        ImageId: !Ref GpuECSOptimizedAMI
+        ImageId: !Ref CpuECSOptimizedAMI
         InstanceType: !Ref ClusterPart1ECSClusterInstanceType
         IamInstanceProfile:
           Name: !Ref EcsInstanceProfile
@@ -5626,7 +8274,7 @@ Resources:
         BlockDeviceMappings:
         - DeviceName: /dev/xvda
           Ebs:
-            VolumeSize: '45'
+            VolumeSize: '30'
         UserData: !Base64
           Fn::Sub:
           - |-
@@ -5686,7 +8334,7 @@ Resources:
         Cpu: 0
         Essential: true
         EntryPoint:
-        - main
+        - ./main
         Environment:
         - Name: AWS_DEFAULT_REGION
           Value: !Ref AWS::Region
@@ -5776,7 +8424,7 @@ Resources:
         Cpu: 0
         Essential: true
         EntryPoint:
-        - main
+        - ./main
         Environment:
         - Name: AWS_DEFAULT_REGION
           Value: !Ref AWS::Region
@@ -5869,7 +8517,7 @@ Resources:
         - Name: tac_threshold
           Value: '0'
         - Name: db_connection_string
-          Value: !Sub postgresql://${DbUsername}:${DbPassword}@${DbLoadBalancer.DNSName}:5432/postgres
+          Value: !Sub postgresql://${DbUsername}:${DbPassword}@${DbLoadBalancer.DNSName}:5432/lambda
         - Name: chunk_size
           Value: !Ref ChunkSize
         - Name: campaign_map
@@ -5891,9 +8539,9 @@ Resources:
         - Name: technique_lookup_limit
           Value: !Ref TechLookupLimit
         - Name: ui_password
-          Value: !Ref SuperuserPassword
+          Value: !FindInMap [UI, ServiceWorkerPassword, Value]
         - Name: ui_username
-          Value: !Ref SuperuserUsername
+          Value: !FindInMap [UI, ServiceWorkerUsername, Value]
         - Name: ecs_cluster_arn
           Value: !GetAtt ECSCluster.Arn
         - Name: encode_other_attrs
@@ -6012,6 +8660,14 @@ Resources:
           DriverOpts:
             size: '10'
             volumetype: gp2
+      - Name: !Sub "${AWS::StackName}_redis-volume"
+        DockerVolumeConfiguration:
+          Scope: shared
+          Driver: rexray/ebs
+          Autoprovision: true
+          DriverOpts:
+            size: '10'
+            volumetype: gp2
       - Name: !Sub "${AWS::StackName}_dags_volume"
         DockerVolumeConfiguration:
           Scope: shared
@@ -6092,8 +8748,10 @@ Resources:
           Protocol: tcp
         Essential: true
         Environment: []
-        MountPoints: []
         VolumesFrom: []
+        MountPoints:
+        - SourceVolume: !Sub "${AWS::StackName}_redis-volume"
+          ContainerPath: /data
         LogConfiguration:
           LogDriver: awslogs
           Options:
@@ -6146,6 +8804,8 @@ Resources:
           Value: postgresql+psycopg2://airflow:airflow@localhost/airflow
         - Name: _PIP_ADDITIONAL_REQUIREMENTS
           Value: ''
+        - Name: VARIABLE_JSON_FILE
+          Value: /opt/airflow/logs/run_vars.json
         - Name: AWS_DEFAULT_REGION
           Value: !Ref AWS::Region
         - Name: BUCKET_NAME
@@ -6162,6 +8822,12 @@ Resources:
           Value: lambda
         - Name: LAMBDA_CP
           Value: !Ref LambdaEC2CapacityProvider
+        - Name: DB_BACKUP_ECS_TASK_DEFINITION
+          Value: !GetAtt DBBackupTaskDefinition.TaskDefinitionArn
+        - Name: DB_RESTORE_ECS_TASK_DEFINITION
+          Value: !GetAtt DBRestoreTaskDefinition.TaskDefinitionArn
+        - Name: DB_CP
+          Value: !Ref DbEC2CapacityProvider
         - Name: TECH_MODEL_CP
           Value: !Ref TechEC2CapacityProvider
         - Name: CLUSTER_1_MODEL_CP
@@ -6185,9 +8851,9 @@ Resources:
         - Name: UI_LB_URL
           Value: !GetAtt UILoadBalancer.DNSName
         - Name: UI_USERNAME
-          Value: !Ref SuperuserUsername
+          Value: !FindInMap [UI, ServiceWorkerUsername, Value]
         - Name: UI_PASSWORD
-          Value: !Ref SuperuserPassword
+          Value: !FindInMap [UI, ServiceWorkerPassword, Value]
         - Name: AIRFLOW_LB_URL
           Value: !GetAtt AirflowLoadBalancer.DNSName
         MountPoints:
@@ -6262,6 +8928,8 @@ Resources:
           Value: postgresql+psycopg2://airflow:airflow@localhost/airflow
         - Name: _PIP_ADDITIONAL_REQUIREMENTS
           Value: ''
+        - Name: VARIABLE_JSON_FILE
+          Value: /opt/airflow/logs/run_vars.json
         - Name: AWS_DEFAULT_REGION
           Value: !Ref AWS::Region
         - Name: BUCKET_NAME
@@ -6278,6 +8946,12 @@ Resources:
           Value: lambda
         - Name: LAMBDA_CP
           Value: !Ref LambdaEC2CapacityProvider
+        - Name: DB_BACKUP_ECS_TASK_DEFINITION
+          Value: !GetAtt DBBackupTaskDefinition.TaskDefinitionArn
+        - Name: DB_RESTORE_ECS_TASK_DEFINITION
+          Value: !GetAtt DBRestoreTaskDefinition.TaskDefinitionArn
+        - Name: DB_CP
+          Value: !Ref DbEC2CapacityProvider
         - Name: TECH_MODEL_CP
           Value: !Ref TechEC2CapacityProvider
         - Name: CLUSTER_1_MODEL_CP
@@ -6301,9 +8975,9 @@ Resources:
         - Name: UI_LB_URL
           Value: !GetAtt UILoadBalancer.DNSName
         - Name: UI_USERNAME
-          Value: !Ref SuperuserUsername
+          Value: !FindInMap [UI, ServiceWorkerUsername, Value]
         - Name: UI_PASSWORD
-          Value: !Ref SuperuserPassword
+          Value: !FindInMap [UI, ServiceWorkerPassword, Value]
         - Name: AIRFLOW_LB_URL
           Value: !GetAtt AirflowLoadBalancer.DNSName
         MountPoints:
@@ -6379,6 +9053,8 @@ Resources:
           Value: CeleryExecutor
         - Name: AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION
           Value: 'false'
+        - Name: VARIABLE_JSON_FILE
+          Value: /opt/airflow/logs/run_vars.json
         - Name: AWS_DEFAULT_REGION
           Value: !Ref AWS::Region
         - Name: BUCKET_NAME
@@ -6395,6 +9071,12 @@ Resources:
           Value: lambda
         - Name: LAMBDA_CP
           Value: !Ref LambdaEC2CapacityProvider
+        - Name: DB_BACKUP_ECS_TASK_DEFINITION
+          Value: !GetAtt DBBackupTaskDefinition.TaskDefinitionArn
+        - Name: DB_RESTORE_ECS_TASK_DEFINITION
+          Value: !GetAtt DBRestoreTaskDefinition.TaskDefinitionArn
+        - Name: DB_CP
+          Value: !Ref DbEC2CapacityProvider
         - Name: TECH_MODEL_CP
           Value: !Ref TechEC2CapacityProvider
         - Name: CLUSTER_1_MODEL_CP
@@ -6418,9 +9100,9 @@ Resources:
         - Name: UI_LB_URL
           Value: !GetAtt UILoadBalancer.DNSName
         - Name: UI_USERNAME
-          Value: !Ref SuperuserUsername
+          Value: !FindInMap [UI, ServiceWorkerUsername, Value]
         - Name: UI_PASSWORD
-          Value: !Ref SuperuserPassword
+          Value: !FindInMap [UI, ServiceWorkerPassword, Value]
         - Name: AIRFLOW_LB_URL
           Value: !GetAtt AirflowLoadBalancer.DNSName
         MountPoints:
@@ -6481,6 +9163,8 @@ Resources:
           Value: postgresql+psycopg2://airflow:airflow@localhost/airflow
         - Name: _PIP_ADDITIONAL_REQUIREMENTS
           Value: ''
+        - Name: VARIABLE_JSON_FILE
+          Value: /opt/airflow/logs/run_vars.json
         - Name: AWS_DEFAULT_REGION
           Value: !Ref AWS::Region
         - Name: BUCKET_NAME
@@ -6497,6 +9181,12 @@ Resources:
           Value: lambda
         - Name: LAMBDA_CP
           Value: !Ref LambdaEC2CapacityProvider
+        - Name: DB_BACKUP_ECS_TASK_DEFINITION
+          Value: !GetAtt DBBackupTaskDefinition.TaskDefinitionArn
+        - Name: DB_RESTORE_ECS_TASK_DEFINITION
+          Value: !GetAtt DBRestoreTaskDefinition.TaskDefinitionArn
+        - Name: DB_CP
+          Value: !Ref DbEC2CapacityProvider
         - Name: TECH_MODEL_CP
           Value: !Ref TechEC2CapacityProvider
         - Name: CLUSTER_1_MODEL_CP
@@ -6520,9 +9210,9 @@ Resources:
         - Name: UI_LB_URL
           Value: !GetAtt UILoadBalancer.DNSName
         - Name: UI_USERNAME
-          Value: !Ref SuperuserUsername
+          Value: !FindInMap [UI, ServiceWorkerUsername, Value]
         - Name: UI_PASSWORD
-          Value: !Ref SuperuserPassword
+          Value: !FindInMap [UI, ServiceWorkerPassword, Value]
         - Name: AIRFLOW_LB_URL
           Value: !GetAtt AirflowLoadBalancer.DNSName
         MountPoints:
@@ -6574,7 +9264,9 @@ Resources:
         - Name: AIRFLOW__CORE__LOAD_EXAMPLES
           Value: 'false'
         - Name: _AIRFLOW_WWW_USER_USERNAME
-          Value: airflow
+          Value: !Ref AirflowUsername
+        - Name: _AIRFLOW_WWW_USER_PASSWORD
+          Value: !Ref AirflowPassword
         - Name: AIRFLOW__API__AUTH_BACKENDS
           Value: airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
         - Name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
@@ -6595,8 +9287,6 @@ Resources:
           Value: db+postgresql://airflow:airflow@localhost/airflow
         - Name: AIRFLOW__CORE__EXECUTOR
           Value: CeleryExecutor
-        - Name: _AIRFLOW_WWW_USER_PASSWORD
-          Value: airflow
         - Name: AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION
           Value: 'false'
         MountPoints:
@@ -6630,7 +9320,7 @@ Resources:
     - ClusterCPAssociation
     - ECSCluster
     Properties:
-      ServiceName: !Sub airflow-service-${AWS::StackName}
+      ServiceName: !Sub airflow-service-${ECSCluster}
       Cluster: !Ref ECSCluster
       TaskDefinition: !GetAtt AirflowTaskDefinition.TaskDefinitionArn
       CapacityProviderStrategy:
@@ -6835,6 +9525,7 @@ Resources:
       ServiceConnectDefaults:
         Namespace: !Sub ${AWS::StackName}-cluster
       Tags: []
+
   ECSClusterLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
