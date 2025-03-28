@@ -410,7 +410,7 @@ Mappings:
   Images:
     LambdaContainerImage:
       ImageUri: >-
-        709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-lambda-function:v0.10.0.2
+        709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-lambda-function:v0.10.0.3
     LambdaAggContainerImage:
       ImageUri: >-
         709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-lambda-function-agg:v0.10.0.1
