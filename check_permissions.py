@@ -19,7 +19,7 @@ actions['autoscaling'] = [
     "autoscaling:DescribeLoadBalancerTargetGroups",
     "autoscaling:DescribeScalingActivities",
     "autoscaling:DescribeTags",
-    "autoscaling:UpdateAutoScalingGroup",
+    "autoscaling:UpdateAutoScalingGroup"
 ]
 
 actions['aws-marketplace'] = [
@@ -61,7 +61,7 @@ actions['cloudformation'] = [
     "cloudformation:TagResource",
     "cloudformation:UntagResource",
     "cloudformation:UpdateStack",
-    "cloudformation:ValidateTemplate",
+    "cloudformation:ValidateTemplate"
 ]
 
 actions['cloudshell'] = [
@@ -132,7 +132,6 @@ actions['ec2'] = [
     "ec2:StartInstances",
     "ec2:StopInstances",
     "ec2:TerminateInstances",
-
     "ec2:DescribeImages",
     "ec2:DescribeImageAttribute",
     "ec2:DescribeImportImageTasks",
@@ -140,7 +139,7 @@ actions['ec2'] = [
     "ec2:DescribeAddresses",
     "ec2:DescribeEgressOnlyInternetGateways",
     "ec2:DescribeInstanceAttribute",
-    "ec2:DescribeInstanceStatus",
+    "ec2:DescribeInstanceStatus"
 ]
 
 actions['ecr'] = [
@@ -158,11 +157,10 @@ actions['ecr'] = [
     "ecr:DeleteRepository",
     "ecr:DeleteRepositoryPolicy",
     "ecr:SetRepositoryPolicy",
-
     "ecr:BatchGetImage",
     "ecr:BatchDeleteImage",
     "ecr:DescribeRegistry",
-    "ecr:GetRepositoryPolicy",
+    "ecr:GetRepositoryPolicy"
 ]
 
 actions['ecs'] = [
@@ -226,7 +224,7 @@ actions['elasticloadbalancing'] = [
     "elasticloadbalancing:ModifyLoadBalancerAttributes",
     "elasticloadbalancing:ModifyTargetGroup",
     "elasticloadbalancing:ModifyTargetGroupAttributes",
-    "elasticloadbalancing:RemoveTags",
+    "elasticloadbalancing:RemoveTags"
 ]
 
 actions['iam'] = [
@@ -234,17 +232,18 @@ actions['iam'] = [
     "iam:AttachRolePolicy",
     "iam:CreateAccessKey",
     "iam:CreateInstanceProfile",
+    "iam:CreatePolicy",
     "iam:CreateRole",
     "iam:DeleteAccessKey",
     "iam:DeleteInstanceProfile",
+    "iam:DeletePolicy",
     "iam:DeleteRole",
     "iam:DeleteRolePolicy",
     "iam:DetachRolePolicy",
     "iam:GetInstanceProfile",
+    "iam:GetPolicy",
     "iam:GetRole",
     "iam:GetRolePolicy",
-    "iam:GetUser",
-    "iam:GetUserPolicy",
     "iam:ListAccessKeys",
     "iam:ListAttachedRolePolicies",
     "iam:ListInstanceProfileTags",
@@ -263,7 +262,7 @@ actions['iam'] = [
     "iam:TagInstanceProfile",
     "iam:UntagInstanceProfile",
     "iam:UpdateAccessKey",
-    "iam:UpdateRole",
+    "iam:UpdateRole"
 ]
 
 actions['lambda'] = [
@@ -289,7 +288,7 @@ actions['lambda'] = [
     "lambda:UntagResource",
     "lambda:UpdateFunctionCode",
     "lambda:UpdateFunctionConfiguration",
-    "lambda:UpdateFunctionEventInvokeConfig",
+    "lambda:UpdateFunctionEventInvokeConfig"
 ]
 
 actions['logs'] = [
@@ -305,7 +304,7 @@ actions['logs'] = [
     "logs:ListTagsLogGroup",
     "logs:PutSubscriptionFilter",
     "logs:TagLogGroup",
-    "logs:UntagLogGroup",
+    "logs:UntagLogGroup"
 ]
 
 actions['s3'] = [
@@ -320,10 +319,32 @@ actions['s3'] = [
     "s3:PutBucketNotification",
     "s3:PutObject",
     "s3:ListBucketVersions",
-    "s3:DeleteObjectVersion",
+    "s3:DeleteObjectVersion"
 ]
 
 actions['ssm'] = ["ssm:GetParameters"]
+
+actions['scheduler'] = [
+    "scheduler:ListSchedules",
+    "scheduler:GetSchedule",
+    "scheduler:ListTagsForResource",
+    "scheduler:CreateSchedule",
+    "scheduler:DeleteSchedule",
+    "scheduler:UpdateSchedule",
+    "scheduler:TagResource",
+    "scheduler:UntagResource",
+]
+
+actions['events'] = [
+    "events:DescribeRule",
+    "events:ListRules",
+    "events:DeleteRule",
+    "events:EnableRule",
+    "events:DisableRule",
+    "events:PutRule",
+    "events:PutTargets",
+    "events:RemoveTargets"
+]
 
 iam_client = boto3.client('iam')
 sts_client = boto3.client('sts')
@@ -395,13 +416,13 @@ def check_permission(action):
         return False
 
 
-def get_on_demand_g_vt_quota(target=4):
+def get_on_demand_quotas(target=4):
     # Create a Service Quotas client
     client = boto3.client('service-quotas')
 
     # Define the service and quota codes for EC2 On-Demand G and VT instances
     service_code = 'ec2'
-    quota_code = 'L-DB2E81BA'  # Replace with the correct quota code for G and VT instances if different
+    quota_code = 'L-1216C47A'  # Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances
 
     # Retrieve the quota details
     response = client.get_service_quota(
@@ -439,7 +460,7 @@ def main():
 
     print("Checking quotas...")
     # check quotas
-    get_on_demand_g_vt_quota(target=4)
+    get_on_demand_quotas(target=20)
 
 
 if __name__ == '__main__':
