@@ -3,6 +3,6 @@
   "helm_chart_version": "0.1.4-1",
   "images": {
     "airflow": "709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-airflow:v0.10.1.7",
-    "ui_web": "709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-ui:v0.10.1.6"
+    "ui_web": "709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-ui:v0.10.1.7"
   }
 }
