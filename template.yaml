@@ -4,9 +4,8 @@ Metadata:
     ParameterGroups:
 
     - Label:
-        default: User Access to EKS cluster
+        default: Pipeline Configuration
       Parameters:
-      - UserARN
       - AutoUpdateHelmChart
 
     - Label:
@@ -36,13 +35,6 @@ Metadata:
       - SequencerContextWindowSize
 
 Parameters:
-
-  UserARN:
-    Type: String
-    Description: User ARN to be added to the EKS cluster. The pattern is arn:aws:iam::<account-id>:user/<user-name>
-    AllowedPattern: ^arn:aws:iam::[0-9]{12}:(root|user(/.+)?/[^/]+)$
-    ConstraintDescription: User ARN must be in the format arn:aws:iam::<account-id>:user/<user-name>
-    MinLength: 20
 
   AutoUpdateHelmChart:
     Type: String
@@ -144,32 +136,32 @@ Mappings:
       ImageUri: >-
         709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-lambda-function
       Version: >-
-        v0.10.1.7
+        v0.10.1.8
     LambdaAggContainerImage:
       ImageUri: >-
         709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-lambda-function-agg
       Version: >-
-        v0.10.1.7
+        v0.10.1.8
     AirflowContainerImage:
       ImageUri: >-
         709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-airflow
       Version: >-
-        v0.10.1.7
+        v0.10.1.8
     ClusterModelPart1ContainerImage:
       ImageUri: >-
         709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-cluster-part-1
       Version: >-
-        v0.10.1.4
+        v0.10.1.8
     FlowModelContainerImage:
       ImageUri: >-
         709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-flow-detector
       Version: >-
-        v0.10.1.3
+        v0.10.1.6
     WebContainerImage:
       ImageUri: >-
         709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-ui
       Version: >-
-        v0.10.1.7
+        v0.10.1.8
     NginxContainerImage:
       ImageUri: >-
         709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-ui-nginx
@@ -381,6 +373,7 @@ Resources:
         - Effect: Allow
           Action:
           - elasticloadbalancing:DescribeLoadBalancers
+          - aws-marketplace:RegisterUsage
           Resource: '*'
 
   EKSClusterRole:
@@ -846,6 +839,8 @@ Resources:
                     return
 
 
+        ENV = os.getenv("ENV")
+
         AUTO_UPDATE_HELM_CHART = os.getenv("AUTO_UPDATE_HELM_CHART")
 
         # auto update helm chart git repo
@@ -881,9 +876,14 @@ Resources:
 
         UI_IMAGE_REPO = os.getenv("UI_IMAGE_REPO")
         UI_IMAGE_TAG = os.getenv("UI_IMAGE_TAG")
+        UI_NGINX_IMAGE_REPO = os.getenv("UI_NGINX_IMAGE_REPO")
+        UI_NGINX_IMAGE_TAG = os.getenv("UI_NGINX_IMAGE_TAG")
 
         AIRFLOW_IMAGE_REPO = os.getenv("AIRFLOW_IMAGE_REPO")
         AIRFLOW_IMAGE_TAG = os.getenv("AIRFLOW_IMAGE_TAG")
+
+        LOG_COLLECTION_IMAGE_REPO = os.getenv("LOG_COLLECTION_IMAGE_REPO")
+        LOG_COLLECTION_IMAGE_TAG = os.getenv("LOG_COLLECTION_IMAGE_TAG")
 
         MAX_ALERTS_FOR_UI_UPLOAD = os.getenv("MAX_ALERTS_FOR_UI_UPLOAD")
 
@@ -989,10 +989,18 @@ Resources:
             missing_variables.append("UI_IMAGE_REPO")
         if not UI_IMAGE_TAG:
             missing_variables.append("UI_IMAGE_TAG")
+        if not UI_NGINX_IMAGE_REPO:
+            missing_variables.append("UI_NGINX_IMAGE_REPO")
+        if not UI_NGINX_IMAGE_TAG:
+            missing_variables.append("UI_NGINX_IMAGE_TAG")
         if not AIRFLOW_IMAGE_REPO:
             missing_variables.append("AIRFLOW_IMAGE_REPO")
         if not AIRFLOW_IMAGE_TAG:
             missing_variables.append("AIRFLOW_IMAGE_TAG")
+        if not LOG_COLLECTION_IMAGE_REPO:
+            missing_variables.append("LOG_COLLECTION_IMAGE_REPO")
+        if not LOG_COLLECTION_IMAGE_TAG:
+            missing_variables.append("LOG_COLLECTION_IMAGE_TAG")
 
         if not MAX_ALERTS_FOR_UI_UPLOAD:
             missing_variables.append("MAX_ALERTS_FOR_UI_UPLOAD")
@@ -1969,7 +1977,15 @@ Resources:
                             "web": {
                                 "repo": UI_IMAGE_REPO,
                                 "tag": UI_IMAGE_TAG
+                            },
+                            "nginx": {
+                                "repo": UI_NGINX_IMAGE_REPO,
+                                "tag": UI_NGINX_IMAGE_TAG
                             }
+                        },
+                        "log_collection": {
+                            "repo": LOG_COLLECTION_IMAGE_REPO,
+                            "tag": LOG_COLLECTION_IMAGE_TAG
                         }
                     },
                     "lambda": {
@@ -2125,6 +2141,8 @@ Resources:
 
 
         def get_ecr_login_password(region, registry_id=None):
+            if ENV is not None and ENV == "prod":
+                region = "us-east-1"
             ecr = boto3.client('ecr', region_name=region)
             if registry_id:
                 response = ecr.get_authorization_token(registryIds=[registry_id])
@@ -2164,6 +2182,7 @@ Resources:
         - lambdaLayer
       Environment:
         Variables:
+          ENV: prod
           AUTO_UPDATE_HELM_CHART: !Ref AutoUpdateHelmChart
           HELM_EXPERIMENTAL_OCI: 1
           OWNER: cypienta
@@ -2227,8 +2246,14 @@ Resources:
           UI_IMAGE_REPO: !FindInMap [Images, WebContainerImage, ImageUri]
           UI_IMAGE_TAG: !FindInMap [Images, WebContainerImage, Version]
 
+          UI_NGINX_IMAGE_REPO: !FindInMap [Images, NginxContainerImage, ImageUri]
+          UI_NGINX_IMAGE_TAG: !FindInMap [Images, NginxContainerImage, Version]
+
           AIRFLOW_IMAGE_REPO: !FindInMap [Images, AirflowContainerImage, ImageUri]
           AIRFLOW_IMAGE_TAG: !FindInMap [Images, AirflowContainerImage, Version]
+
+          LOG_COLLECTION_IMAGE_REPO: !FindInMap [Images, LogCollectionContainerImage, ImageUri]
+          LOG_COLLECTION_IMAGE_TAG: !FindInMap [Images, LogCollectionContainerImage, Version]
 
           MAX_ALERTS_FOR_UI_UPLOAD: !Ref MaxAlertsForUiUpload
 
@@ -2374,17 +2399,6 @@ Resources:
         Value:
           Fn::Sub: ${AWS::StackName}/ControlPlane
       Version: '1.32'
-
-  UserEKSAccessEntry:
-    Type: AWS::EKS::AccessEntry
-    Properties:
-      ClusterName: !Ref ControlPlane
-      PrincipalArn: !Ref UserARN
-      AccessPolicies:
-      - PolicyArn: arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy
-        AccessScope:
-          Type: cluster
-      Type: STANDARD
 
   LambdaRoleEKSAccessEntry:
     Type: AWS::EKS::AccessEntry
