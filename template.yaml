@@ -146,17 +146,17 @@ Mappings:
       ImageUri: >-
         709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-airflow
       Version: >-
-        v0.10.1.8
+        v0.10.2.2
     ClusterModelPart1ContainerImage:
       ImageUri: >-
         709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-cluster-part-1
       Version: >-
-        v0.10.1.8
+        v0.10.2.2
     FlowModelContainerImage:
       ImageUri: >-
         709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-flow-detector
       Version: >-
-        v0.10.1.6
+        v0.10.2.2
     WebContainerImage:
       ImageUri: >-
         709825985650.dkr.ecr.us-east-1.amazonaws.com/cypienta/pipeline-ui
