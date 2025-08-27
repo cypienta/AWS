@@ -1,8 +1,8 @@
 {
-  "helm_repo_url": "oci://582441423537.dkr.ecr.us-east-1.amazonaws.com/seshat-helm/cypienta-chart",
-  "helm_chart_version": "0.1.4-test",
+  "helm_repo_url": "oci://582441423537.dkr.ecr.us-east-1.amazonaws.com/seshat-helm/cypienta-simple-chart",
+  "helm_chart_version": "0.1.0-testeks",
   "images": {
-    "airflow": "582441423537.dkr.ecr.us-east-1.amazonaws.com/seshat-airflow:v0.10.4-test",
+    "airflow": "697204775395.dkr.ecr.us-east-1.amazonaws.com/seshat-airflow:v0.10.2.1-simple-test",
     "ui_web": "582441423537.dkr.ecr.us-east-1.amazonaws.com/seshat-ui:v0.10.5-test"
   }
 }
