@@ -125,10 +125,10 @@ Parameters:
   #   MinValue: 10
 
   # SequencerContextWindowSize:
-    Description: Context window size for the sequencer.
-    Type: Number
-    Default: 5000
-    MinValue: 500
+    # Description: Context window size for the sequencer.
+    # Type: Number
+    # Default: 5000
+    # MinValue: 500
 
 Mappings:
   Images:
